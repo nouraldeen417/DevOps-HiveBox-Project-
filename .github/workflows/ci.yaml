@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t hivebox .
+        run: docker build --no-cache -t hivebox .
       
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
