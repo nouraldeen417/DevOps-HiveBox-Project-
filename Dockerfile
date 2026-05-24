@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
 
 COPY src/ ./src/
 
-RUN useradd -m appuser
+RUN adduser -D appuser
 USER appuser
 
 CMD ["python", "src/app.py"]
