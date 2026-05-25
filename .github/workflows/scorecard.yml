@@ -1,0 +1,64 @@
+# OpenSSF (OpenSource Software) Scorecard , Is An automated security scanner that checks your repo against security best practices.
+# Run automatically on code you own using the GitHub Action
+# It gives your project a score (0–10) and reports weaknesses.
+# To see the results (Repository → Security → Code Scanning Alerts)
+
+name:  OpenSSF Scorecard
+on: 
+  workflow_dispatch:        # allows manual trigger from GitHub UI
+  push:
+    branches: [main , development ]
+
+# Based on the Tool Docs ,These permissions are needed 
+permissions: read-all
+# Scorecard needs to read your repo.
+
+
+# JOBS
+#Run Scorecard
+#   ↓
+# Generate security report
+#   ↓
+# Upload report to GitHub
+
+
+jobs:
+  analysis:
+    name: Scorecard Analysis
+    runs-on: ubuntu-latest
+
+    # Based on the Tool Docs ,These permissions are needed 
+    permissions:
+      security-events: write
+      # Why: needed to upload results to GitHub Security tab
+      id-token: write
+      # Why: needed for Scorecard to publish results publicly
+
+    steps:
+      # Checking out the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Scorecard best practice.
+          # Prevents the GitHub token from being available
+          persist-credentials: false
+
+      # Running Scorecard tool
+      - name: Run Scorecard
+        uses: ossf/scorecard-action@v2.3.1
+        with:
+          results_file: results.sarif
+
+          # SARIF is a standard security-report format.
+          results_format: sarif
+
+          # Shows your score publicly on scorecard.dev
+          publish_results: true
+
+      - name: Upload to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          # Why: Makes results visible inside your repo
+          # under GitHub → Security → Code scanning
+          # You can see and fix issues directly on GitHub.

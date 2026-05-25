@@ -6,3 +6,8 @@ conftest.py
 .git/
 .env
 *.md
+.gitignore          ← git config, not needed in container
+.github/            ← CI workflows, not needed in container
+*.yml               ← careful — only if no yml needed in app
+Dockerfile          ← no need to copy itself into the image
+Dockerfile*         ← covers Dockerfile.dev etc
