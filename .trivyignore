@@ -1,0 +1,8 @@
+# CVE-2025-69720 - ncurses, no fix available in Debian yet
+CVE-2025-69720
+
+# CVE-2026-23949 - jaraco.context pip internal, not runtime risk
+CVE-2026-23949
+
+# CVE-2026-24049 - wheel pip internal, not runtime risk
+CVE-2026-24049
