@@ -7,7 +7,7 @@ name:  OpenSSF Scorecard
 on: 
   workflow_dispatch:        # allows manual trigger from GitHub UI
   push:
-    branches: [main]
+    branches: [main , development ]
 
 # Based on the Tool Docs ,These permissions are needed 
 permissions: read-all
