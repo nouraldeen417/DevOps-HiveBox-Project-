@@ -13,6 +13,11 @@ on:
 permissions: read-all
 # Scorecard needs to read your repo.
 
+# Opt-in to Node.js 24 runtime for GitHub Actions compatibility.
+# Prevents deprecation warnings for actions using Node.js 20 internally (checkout, codeql, etc).
+# Temporary until GitHub switches default runtime in 2026.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 # JOBS
 #Run Scorecard
@@ -58,7 +63,7 @@ jobs:
           publish_results: true
 
       - name: Upload to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
           # Why: Makes results visible inside your repo
