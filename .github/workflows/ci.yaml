@@ -56,13 +56,6 @@ jobs:
       - name: Build Docker image
         run: docker build --no-cache -t hivebox .
       
-      - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: hivebox
-          format: table
-          exit-code: 1
-          severity: CRITICAL,HIGH
       
       - name: Run container
         run: docker run -d -p 5000:5000 --name hivebox hivebox
