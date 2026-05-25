@@ -13,11 +13,6 @@ on:
 permissions: read-all
 # Scorecard needs to read your repo.
 
-# Opt-in to Node.js 24 runtime for GitHub Actions compatibility.
-# Prevents deprecation warnings for actions using Node.js 20 internally (checkout, codeql, etc).
-# Temporary until GitHub switches default runtime in 2026.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 # JOBS
 #Run Scorecard
@@ -32,6 +27,12 @@ jobs:
     name: Scorecard Analysis
     runs-on: ubuntu-latest
 
+    # Opt-in to Node.js 24 runtime for GitHub Actions compatibility.
+    # Prevents deprecation warnings for actions using Node.js 20 internally (checkout, codeql, etc).
+    # Temporary until GitHub switches default runtime in 2026.
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    
     # Based on the Tool Docs ,These permissions are needed 
     permissions:
       security-events: write
