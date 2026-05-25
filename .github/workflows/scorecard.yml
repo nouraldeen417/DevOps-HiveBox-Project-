@@ -33,6 +33,8 @@ jobs:
       # Why: needed to upload results to GitHub Security tab
       id-token: write
       # Why: needed for Scorecard to publish results publicly
+      contents: read 
+      # read repo contents during analysis
 
     steps:
       # Checking out the code
