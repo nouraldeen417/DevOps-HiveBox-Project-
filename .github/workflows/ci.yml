@@ -74,7 +74,7 @@ jobs:
               uses: actions/checkout@v4
             
             - name: Build Docker Image
-              run:  docker build --no-cache -t hivebox:0.0.2
+              run:  docker build --no-cache -t hivebox:0.0.2 .
             
               # Scan the Image using Trivey
             - name: Scan image with Trivy
