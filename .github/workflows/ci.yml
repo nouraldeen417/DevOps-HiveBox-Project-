@@ -64,9 +64,13 @@ jobs:
             - name: Install dependencies
               run:  pip install -r requirements.txt
 
-            
+            - name: Start app for integration tests
+              run: |
+                python src/app.py &
+                sleep 3
+                            
             - name: Run Pytest
-              run: pytest tests/test_app.py -v
+              run: pytest tests/ -v
             # Why -v: verbose output shows each test name and result.
 
     build:
@@ -99,8 +103,11 @@ jobs:
               run: sleep 3
 
             # Calling the endpoint from the container 
-            - name: Run integration tests
-              run: pytest tests/test_integration.py -v
+            - name: Call /version endpoint
+              run: |
+                    RESPONSE=$(curl -s http://localhost:5000/version)
+                    echo "Response: $RESPONSE"
+                    echo $RESPONSE | grep -q '"version"'
             
             - name: Stop container
               run: docker stop hivebox-test
