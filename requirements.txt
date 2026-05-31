@@ -1,5 +1,4 @@
 flask
 pytest
 requests
-flake8
-autopep8
+pylint
