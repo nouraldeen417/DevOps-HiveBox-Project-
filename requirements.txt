@@ -2,3 +2,4 @@ flask
 pytest
 requests
 pylint
+prometheus-flask-exporter
