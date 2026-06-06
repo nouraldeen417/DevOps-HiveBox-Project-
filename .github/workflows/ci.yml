@@ -18,13 +18,20 @@ jobs:
 
 
         steps:
+            #  Audit outbound network traffic from the GitHub Actions runner for security visibility.
+            - name: Harden runner
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
+              with:
+                egress-policy: audit
+
+
             # Step is getting the code into the runner
             - name: checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
             
             # Install Python on the runner
             - name: Set up Python
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
               with:
                 python-version: '3.12'
             
@@ -43,7 +50,7 @@ jobs:
 
             # Using Hadolint Action to scan the Dockerfile
             - name: Run Hadolint
-              uses: hadolint/hadolint-action@v3.3.0
+              uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf
               with:
                 dockerfile: Dockerfile
 
@@ -53,11 +60,17 @@ jobs:
         needs: lint
 
         steps:
+
+            # Audit outbound network traffic from the GitHub Actions runner for security visibility.
+            - name: Harden runner
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
+              with:
+                egress-policy: audit
             - name: checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
             - name: Setup Python
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
               with:
                 python-version: '3.12'
             
@@ -75,15 +88,21 @@ jobs:
         needs: test
 
         steps:
+
+            # Audit outbound network traffic from the GitHub Actions runner for security visibility.
+            - name: Harden runner
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
+              with:
+                egress-policy: audit
             - name: checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
             
             - name: Build Docker Image
               run:  docker build --no-cache -t hivebox:0.0.2 .
             
               # Scan the Image using Trivey
             - name: Scan image with Trivy
-              uses: aquasecurity/trivy-action@master
+              uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
               with:
                 image-ref: hivebox:0.0.2
                 format: table

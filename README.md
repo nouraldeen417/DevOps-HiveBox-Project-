@@ -25,7 +25,7 @@ The project aims to cover the whole Software Development Life Cycle (SDLC). That
 
 ## Project description
 
-Developed an end-to-end DevOps project to build a scalable RESTful API for tracking environmental sensor data from openSenseMap, customized to support beekeepers with daily monitoring tasks. Built a Flask-based application delivering JSON-based APIs integrated with Redis-Valkey for caching and MinIO for object storage. Implemented a complete DevOps workflow using Jenkins, Docker, Kubernetes, Terraform, Ansible, Helm, and ArgoCD, including CI pipelines with automated testing and Hadolint, and deployed AWS infrastructure with GitOps-based Kubernetes deployment while designing the system for high scalability and performance.
+Developed an end-to-end DevOps project to build a scalable RESTful API for tracking environmental sensor data from openSenseMap, customized to support beekeepers with daily monitoring tasks. Built a Flask-based application delivering JSON-based APIs integrated with Redis-Valkey for caching and MinIO for object storage. Implemented a complete DevOps workflow using GitHub Actions, Docker, Kubernetes, Terraform, Ansible, Helm, and ArgoCD, including CI pipelines with automated testing and Hadolint, and deployed AWS infrastructure with GitOps-based Kubernetes deployment while designing the system for high scalability and performance.
 
 
 ---

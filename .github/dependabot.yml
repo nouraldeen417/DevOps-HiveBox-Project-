@@ -1,0 +1,25 @@
+# What it does: Automatically opens PRs when your dependencies have outdated versions or known CVEs. Without it you'd never know a package you use got a security fix.
+
+version: 2
+
+updates:
+  # Python packages (requirements.txt)
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # GitHub Actions (all your workflow files)
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # Docker base image (your Dockerfile)
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
