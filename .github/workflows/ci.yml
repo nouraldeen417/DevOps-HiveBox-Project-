@@ -176,6 +176,13 @@ jobs:
                 
                 echo "=== APPLICATION LOGS ==="
                 kubectl logs -l app.kubernetes.io/name=hivebox -n hivebox --all-containers=true
+            - name: Debug Store in CI
+              run: |
+                echo "=== /store direct response ==="
+                curl -s http://localhost/store
+                
+                echo "=== app logs after store call ==="
+                kubectl logs -l app=hivebox -n hivebox --tail=30
             - name: Install Venom
               # Declarative test runner for your E2E HTTP validation
               run: |
