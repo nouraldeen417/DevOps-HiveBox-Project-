@@ -143,10 +143,12 @@ jobs:
                   --for=condition=ready pod \
                   --selector=app.kubernetes.io/component=controller \
                   --timeout=120s
-
+            - name: Create Namespace
+              run: |
+                kubectl create namespace hivebox
             - name: Create minio Credentials
               run: |
-                kubectl create secret generic minio-credentials \
+                kubectl create secret generic minio-credentials -n hivebox \
                   --from-literal=username=${{ secrets.MINIO_USER }} \
                   --from-literal=password=${{ secrets.MINIO_PASS }}
                   
