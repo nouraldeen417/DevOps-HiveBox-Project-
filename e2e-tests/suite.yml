@@ -12,6 +12,14 @@ testcases:
           - result.statuscode ShouldEqual 200
           - result.body ShouldContainSubstring version
 
+  - name: Fetch Temperature to warm cache
+    steps:
+      - type: http
+        method: GET
+        url: "{{.host}}/temperature"
+        assertions:
+          - result.statuscode ShouldEqual 200
+
   - name: Test Manual MinIO Export
     steps:
       - type: http
