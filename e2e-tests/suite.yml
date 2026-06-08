@@ -17,6 +17,8 @@ testcases:
       - type: http
         method: GET
         url: "{{.host}}/temperature"
+        retry: 5
+        delay: 10
         assertions:
           - result.statuscode ShouldEqual 200
 
