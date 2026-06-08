@@ -155,7 +155,7 @@ jobs:
             - name: Deploy Infrastructure via Kustomize (Valkey & MinIO)
               run: |
                 kubectl apply -k k8s/infrastructure/overlays/local/
-                kubectl wait --for=condition=Ready pods --all -n default --timeout=120s
+                kubectl wait --for=condition=Ready pods --all -n hivebox --timeout=120s
 
             - name: Deploy Application via Helm
               run: |
@@ -164,7 +164,7 @@ jobs:
                   --set image.tag=${{ env.IMAGE_TAG }} \
                   --set image.pullPolicy=Never
                 
-                kubectl rollout status deployment/hivebox --timeout=120s
+                kubectl rollout status deployment/hivebox -n hivebox --timeout=120s
 
             - name: Install Venom
               # Declarative test runner for your E2E HTTP validation
