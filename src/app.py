@@ -1,22 +1,24 @@
+import os
 from datetime import datetime, timezone, timedelta
 import requests
 from flask import Flask, jsonify
+from prometheus_flask_exporter import PrometheusMetrics
 
-APP_VERSION = "0.0.1"
+APP_VERSION = "0.0.2"
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
-# These are the 3 senseBox IDs from Phase 1.
-# Stored here as a list so adding more boxes later is just one line.
-SENSEBOX_IDS = [
-    "5eba5fbad46fb8001b799786",
-    "5c21ff8f919bf8001adf2488",
-    "5ade1acf223bd80019a1011c",
-]
+# senseBox IDs are configurable via env var — Phase 4 requirement.
+# Fallback to the original 3 boxes if the env var is not set.
+SENSEBOX_IDS = os.environ.get(
+    "SENSEBOX_IDS",
+    "5eba5fbad46fb8001b799786,5c21ff8f919bf8001adf2488,5ade1acf223bd80019a1011c"
+).split(",")
 
 OPENSENSEMAP_API = "https://api.opensensemap.org/boxes"
 
-# Data must not be older than this — Phase 3 requirement
+# Data must not be older than this
 MAX_DATA_AGE_HOURS = 1
 
 
@@ -31,37 +33,45 @@ def get_temperature_from_box(box_id):
     try:
         response = requests.get(
             f"{OPENSENSEMAP_API}/{box_id}",
-            timeout=5  # never wait forever — 5 seconds max
+            timeout=5
         )
-        response.raise_for_status()  # raises error if status is 4xx or 5xx
+        response.raise_for_status()
         data = response.json()
 
-        # Loop through sensors to find the temperature one
         for sensor in data.get("sensors", []):
             if "temp" in sensor.get("title", "").lower():
                 measurement = sensor.get("lastMeasurement")
-
                 if not measurement:
                     return None
 
-                # Parse the timestamp and check freshness
                 created_at = datetime.fromisoformat(
                     measurement["createdAt"].replace("Z", "+00:00")
                 )
                 age = datetime.now(timezone.utc) - created_at
 
-                # Reject data older than 1 hour — Phase 3 requirement
                 if age > timedelta(hours=MAX_DATA_AGE_HOURS):
                     return None
 
                 return float(measurement["value"])
 
-    except (requests.RequestException, ValueError, KeyError):
-        # If anything goes wrong with one box, skip it — don't crash the whole API
+    except Exception:  # pylint: disable=broad-except
         return None
-    except Exception:  
-     return None
+
     return None
+
+
+def get_temperature_status(average):
+    """
+    Returns a human-readable status based on the average temperature.
+    - Below 10:   Too Cold
+    - 10 to 36:   Good
+    - Above 36:   Too Hot
+    """
+    if average < 10:
+        return "Too Cold"
+    if average <= 36:
+        return "Good"
+    return "Too Hot"
 
 
 @app.route("/version")
@@ -80,14 +90,12 @@ def get_temperature():
     Returns average temperature from all senseBox devices.
     Only includes readings from the last hour.
     """
-    readings = []
+    readings = [
+        temp
+        for box_id in SENSEBOX_IDS
+        if (temp := get_temperature_from_box(box_id)) is not None
+    ]
 
-    for box_id in SENSEBOX_IDS:
-        temp = get_temperature_from_box(box_id)
-        if temp is not None:
-            readings.append(temp)
-
-    # If no valid readings found, return a clear error
     if not readings:
         return jsonify({
             "error": "No valid temperature data available",
@@ -99,6 +107,7 @@ def get_temperature():
     return jsonify({
         "average_temperature": average,
         "unit": "°C",
+        "status": get_temperature_status(average),
         "boxes_used": len(readings),
         "boxes_total": len(SENSEBOX_IDS)
     })

@@ -1,0 +1,70 @@
+# deployment.yaml
+# Tells Kubernetes what to run and how many copies to keep alive.
+# If a pod crashes, Kubernetes automatically restarts it.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hivebox
+  namespace: hivebox
+  labels:
+    app: hivebox
+spec:
+  # Run 2 copies of the app for reliability
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: hivebox
+
+  template:
+    metadata:
+      labels:
+        app: hivebox
+    spec:
+      # Security: never run as root
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+
+      containers:
+        - name: hivebox
+          # Image will be updated by CD pipeline after every merge to main
+          image: ghcr.io/moelgenady/devops-hivebox:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5000
+
+          # Read senseBox IDs from the ConfigMap
+          env:
+            - name: SENSEBOX_IDS
+              valueFrom:
+                configMapKeyRef:
+                  name: hivebox-config
+                  key: SENSEBOX_IDS
+
+          # Resource limits — prevents one pod from starving the node
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+
+          # Liveness probe — Kubernetes restarts the pod if this fails
+          livenessProbe:
+            httpGet:
+              path: /version
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+          # Readiness probe — pod only receives traffic when this passes
+          readinessProbe:
+            httpGet:
+              path: /version
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10

@@ -1,0 +1,28 @@
+# hpa.yaml
+# Automatically scales pods between 2 and 5 replicas
+# based on CPU usage. Uses the resource limits defined
+# in deployment.yaml as the baseline for scaling decisions.
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hivebox
+  namespace: hivebox
+  labels:
+    app: hivebox
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hivebox
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+          # Why 70%: scale up when pods are at 70% CPU
+          # gives headroom before performance degrades

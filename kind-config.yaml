@@ -1,0 +1,26 @@
+# kind-config.yaml
+# Defines a local Kubernetes cluster using KIND (Kubernetes IN Docker).
+# This config enables Ingress-Nginx so HTTP traffic from your browser
+# can reach your app running inside the cluster.
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            # Marks this node as ready to receive Ingress traffic
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # Map port 80 from inside the cluster to port 80 on your laptop
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      # Map port 443 from inside the cluster to port 443 on your laptop
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP

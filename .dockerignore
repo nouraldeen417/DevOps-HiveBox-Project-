@@ -1,13 +1,40 @@
+# Virtual environments
+.venv/
 venv/
+
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Tests — not needed in the image
 tests/
-conftest.py
+
+# Git
 .git/
+.gitignore
+
+# CI/CD — not needed in the image
+.github/
+
+# Kubernetes — not needed in the image
+k8s/
+kind-config.yaml
+
+# Docs
+README.md
+
+# Local env
 .env
-*.md
-.gitignore          ← git config, not needed in container
-.github/            ← CI workflows, not needed in container
-*.yml               ← careful — only if no yml needed in app
-Dockerfile          ← no need to copy itself into the image
-Dockerfile*         ← covers Dockerfile.dev etc
+.env.*
+
+#  SonarQube 
+.sonar/
+.scannerwork/
+sonar-project.properties
+
+README.md
+RADAR.md
+
+# TLS certificates — never commit
+tls.key
+tls.crt

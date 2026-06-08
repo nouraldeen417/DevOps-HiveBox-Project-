@@ -1,10 +1,10 @@
 # What it does: Scans your Python source code for security vulnerabilities without running it — things like hardcoded secrets, insecure function calls, injection risks. Results appear in your repo under Security → Code scanning alerts.
 
+# SAST Tools
 name: CodeQL
 
 on:
-  push:
-    branches: [main]
+
   pull_request:
     branches: [main]
 

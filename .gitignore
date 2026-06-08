@@ -1,5 +1,43 @@
+
+# Virtual environments
+.venv/
 venv/
+
+# Python cache
 __pycache__/
+*.py[cod]
 *.pyc
 *.pyo
+
+# Pytest
+.pytest_cache/
+.coverage
+
+# KIND local state
+.kind/
+kubeconfig
+
+# Trivy local reports
+trivy-results.sarif
+
+# SonarQube local cache
+.sonar/
+.scannerwork/
+
+# Editor
+.vscode/
+.idea/
+
+# Secrets
 .env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+*.retry
+
+# TLS certificates — never commit
+tls.key
+tls.crt

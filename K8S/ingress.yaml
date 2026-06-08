@@ -1,0 +1,27 @@
+# ingress.yaml
+# Routes external HTTP traffic into the cluster.
+# Without this, your app is only reachable from inside the cluster.
+# With this, you can curl http://localhost/temperature from your laptop.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hivebox
+  namespace: hivebox
+  labels:
+    app: hivebox
+  annotations:
+    # Use Ingress-Nginx as the controller that we donwloaded
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hivebox
+                port:
+                  number: 80

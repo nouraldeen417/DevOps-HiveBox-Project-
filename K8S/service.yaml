@@ -1,0 +1,23 @@
+# service.yaml
+# Gives your pods a stable internal name and IP.
+# Without this, pods are unreachable because their IPs change on every restart.
+# The Ingress will route traffic to this Service, not directly to pods.
+# This is ClusterIP service 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: hivebox
+  namespace: hivebox
+  labels:
+    app: hivebox
+spec:
+  selector:
+    # Matches pods that have this label — set in deployment.yaml
+    app: hivebox
+  ports:
+    - name: http
+      port: 80
+      # Traffic hitting port 80 on the Service gets forwarded
+      # to port 5000 on the pod where Flask is listening
+      targetPort: 5000

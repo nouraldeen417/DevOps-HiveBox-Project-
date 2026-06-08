@@ -1,95 +1,107 @@
+from datetime import datetime, timezone, timedelta
 from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone
-from src.app import app, APP_VERSION
+from src.app import app, APP_VERSION, get_temperature_status
 
-# ─── /version tests (unchanged from Phase 2) ───────────────────────────────
 
-def test_version_endpoint_returns_200():
-    client = app.test_client()
-    response = client.get("/version")
+# ── Helpers ────────────────────────────────────────────────────────────────
+
+def make_mock_response(temp_value, minutes_old=10):
+    """
+    Builds a fake openSenseMap API response.
+    Avoids real HTTP calls — keeps tests fast and reliable.
+    """
+    created_at = datetime.now(timezone.utc) - timedelta(minutes=minutes_old)
+    mock = MagicMock()
+    mock.raise_for_status = MagicMock()
+    mock.json.return_value = {
+        "sensors": [{
+            "title": "Temperatur",
+            "lastMeasurement": {
+                "value": str(temp_value),
+                "createdAt": created_at.isoformat().replace("+00:00", "Z")
+            }
+        }]
+    }
+    return mock
+
+
+# ── /version ───────────────────────────────────────────────────────────────
+
+def test_version_returns_200():
+    response = app.test_client().get("/version")
     assert response.status_code == 200
 
 
-def test_version_endpoint_returns_correct_json():
-    client = app.test_client()
-    response = client.get("/version")
+def test_version_returns_correct_json():
+    response = app.test_client().get("/version")
     assert response.get_json() == {"version": APP_VERSION}
 
 
 def test_version_value():
-    assert APP_VERSION == "0.0.1"
+    assert APP_VERSION == "0.0.2"
 
 
-# ─── /temperature tests (new in Phase 3) ───────────────────────────────────
+# ── /temperature ───────────────────────────────────────────────────────────
 
-def make_mock_response(temp_value, minutes_old=10):
-    """
-    Helper that builds a fake openSenseMap API response.
-    We use this so tests don't make real HTTP calls — fast and reliable.
-    """
-    created_at = datetime.now(timezone.utc)
-    from datetime import timedelta
-    created_at = created_at - timedelta(minutes=minutes_old)
-
-    mock = MagicMock()
-    mock.json.return_value = {
-        "sensors": [
-            {
-                "title": "Temperatur",
-                "lastMeasurement": {
-                    "value": str(temp_value),
-                    "createdAt": created_at.isoformat().replace("+00:00", "Z")
-                }
-            }
-        ]
-    }
-    mock.raise_for_status = MagicMock()
-    return mock
-
-
-def test_temperature_endpoint_returns_200():
-    """
-    /temperature must return 200 when valid data is available.
-    We mock the HTTP calls so no real internet needed.
-    """
-    with patch("app.requests.get") as mock_get:
+def test_temperature_returns_200_with_valid_data():
+    with patch("src.app.requests.get") as mock_get:
         mock_get.return_value = make_mock_response(22.5)
-        client = app.test_client()
-        response = client.get("/temperature")
+        response = app.test_client().get("/temperature")
         assert response.status_code == 200
 
 
-def test_temperature_returns_average():
-    """
-    /temperature must return the correct average across all boxes.
-    """
-    with patch("app.requests.get") as mock_get:
+def test_temperature_response_shape():
+    with patch("src.app.requests.get") as mock_get:
         mock_get.return_value = make_mock_response(22.5)
-        client = app.test_client()
-        response = client.get("/temperature")
-        data = response.get_json()
+        data = app.test_client().get("/temperature").get_json()
         assert "average_temperature" in data
+        assert "status" in data
         assert data["unit"] == "°C"
 
 
 def test_temperature_rejects_old_data():
-    """
-    /temperature must return 503 if all data is older than 1 hour.
-    """
-    with patch("app.requests.get") as mock_get:
-        # 90 minutes old — should be rejected
+    with patch("src.app.requests.get") as mock_get:
         mock_get.return_value = make_mock_response(22.5, minutes_old=90)
-        client = app.test_client()
-        response = client.get("/temperature")
+        response = app.test_client().get("/temperature")
         assert response.status_code == 503
 
 
 def test_temperature_handles_api_failure():
-    """
-    /temperature must return 503 if all boxes are unreachable.
-    """
-    with patch("app.requests.get") as mock_get:
+    with patch("src.app.requests.get") as mock_get:
         mock_get.side_effect = Exception("Network error")
-        client = app.test_client()
-        response = client.get("/temperature")
+        response = app.test_client().get("/temperature")
         assert response.status_code == 503
+
+
+# ── status logic ───────────────────────────────────────────────────────────
+
+def test_status_too_cold():
+    assert get_temperature_status(5) == "Too Cold"
+
+
+def test_status_good():
+    assert get_temperature_status(22) == "Good"
+
+
+def test_status_too_hot():
+    assert get_temperature_status(40) == "Too Hot"
+
+
+def test_status_boundary_low():
+    assert get_temperature_status(10) == "Good"
+
+
+def test_status_boundary_high():
+    assert get_temperature_status(36) == "Good"
+
+
+# ── /metrics ───────────────────────────────────────────────────────────────
+
+def test_metrics_endpoint_returns_200():
+    response = app.test_client().get("/metrics")
+    assert response.status_code == 200
+
+
+def test_metrics_contains_prometheus_data():
+    response = app.test_client().get("/metrics")
+    assert b"flask_http" in response.data
