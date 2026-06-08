@@ -10,7 +10,8 @@ on:
     branches: [main]
 
 # Based on the Tool Docs ,These permissions are needed 
-permissions: read-all
+permissions:
+  contents: read
 # Scorecard needs to read your repo.
 
 

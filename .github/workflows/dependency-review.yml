@@ -10,8 +10,8 @@ on:
   # the dependency changes introduced by the PR against
   # the base branch and blocks if any are vulnerable
 
-permissions: read-all
-
+permissions:
+  contents: read
 jobs:
   dependency-review:
     name: Scan dependency changes
