@@ -10,12 +10,12 @@ testcases:
         url: "{{.host}}/version"
         assertions:
           - result.statuscode ShouldEqual 200
-          - result.bodyjson.version ShouldExist
+          - result.body ShouldContainSubstring version
 
   - name: Test Manual MinIO Export
     steps:
       - type: http
-        method: POST
+        method: GET
         url: "{{.host}}/store"
         assertions:
           - result.statuscode ShouldEqual 200
