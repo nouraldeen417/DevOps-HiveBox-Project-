@@ -5,6 +5,7 @@ on:
   workflow_run:
     workflows: ["Continuous Integration"]
     types: [completed]
+  workflow_dispatch:        # allows manual trigger from GitHub UI
 
 # Cancel previous CD run if a new push happens
 # Why: only the latest merged code should be delivered
