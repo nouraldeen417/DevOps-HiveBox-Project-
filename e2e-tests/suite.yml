@@ -1,13 +1,13 @@
 name: Hivebox End-to-End Test Suite
 vars:
-  host: http://localhost
+  host: "http://localhost"
 
 testcases:
   - name: Verify Version Endpoint
     steps:
       - type: http
         method: GET
-        url: {{.vars.host}}/version
+        url: "{{.host}}/version"
         assertions:
           - result.statuscode ShouldEqual 200
           - result.bodyjson.version ShouldExist
@@ -16,7 +16,7 @@ testcases:
     steps:
       - type: http
         method: POST
-        url: {{.vars.host}}/store
+        url: "{{.host}}/store"
         assertions:
           - result.statuscode ShouldEqual 200
 
@@ -24,7 +24,7 @@ testcases:
     steps:
       - type: http
         method: GET
-        url: {{.vars.host}}/readyz
+        url: "{{.host}}/readyz"
         assertions:
           - result.statuscode ShouldEqual 200
 
@@ -32,7 +32,7 @@ testcases:
     steps:
       - type: http
         method: GET
-        url: {{.vars.host}}/metrics
+        url: "{{.host}}/metrics"
         assertions:
           - result.statuscode ShouldEqual 200
           - result.body ShouldContainSubstring flask_http
