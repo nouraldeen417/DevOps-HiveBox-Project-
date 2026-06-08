@@ -165,7 +165,17 @@ jobs:
                   --set image.pullPolicy=Never
                 
                 kubectl rollout status deployment/hivebox -n hivebox --timeout=120s
-
+            - name: Debug Pod Failure
+              if: failure()
+              run: |
+                echo "=== POD STATUS ==="
+                kubectl get pods -n hivebox
+                
+                echo "=== POD EVENTS & DETAILS ==="
+                kubectl describe pods -n hivebox
+                
+                echo "=== APPLICATION LOGS ==="
+                kubectl logs -l app.kubernetes.io/name=hivebox -n hivebox --all-containers=true
             - name: Install Venom
               # Declarative test runner for your E2E HTTP validation
               run: |
