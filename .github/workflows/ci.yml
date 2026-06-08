@@ -164,7 +164,7 @@ jobs:
                   --set image.tag=${{ env.IMAGE_TAG }} \
                   --set image.pullPolicy=Never
                 
-                kubectl rollout status deployment/hivebox -n hivebox --timeout=120s
+                kubectl wait --for=condition=Ready pods --all -n hivebox --timeout=200s
             - name: Debug Pod Failure
               if: failure()
               run: |

@@ -43,19 +43,23 @@ def set_cached_temperature(data):
 
 
 def get_cache_age():
-    """Return age of cached data in seconds, or None if no cache."""
+    """Return age of cached data in seconds, or None if no cache exists."""
     try:
         ttl = get_client().ttl("temperature")
-        if ttl < 0:
-            return None
+        if ttl == -2:
+            return None          # key doesn't exist
+        if ttl == -1:
+            return 0             # key exists but no expiry = treat as fresh
         return CACHE_TTL_SECONDS - ttl
-    except Exception:  # pylint: disable=broad-except
-        return None
+    except Exception:            # pylint: disable=broad-except
+        return None              # valkey unreachable
 
 
 def is_cache_fresh():
     """Return True if cache exists and is less than 5 minutes old."""
     age = get_cache_age()
     if age is None:
-        return False
+        # key doesn't exist = fresh start, not the same as stale
+        # only fail readyz if cache existed and went stale
+        return True
     return age < CACHE_TTL_SECONDS
