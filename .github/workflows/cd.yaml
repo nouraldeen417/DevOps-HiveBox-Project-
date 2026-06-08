@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: [Continuous Integration]
     types: [completed]
-    branches: [main]
+
 
 
 # Cancel previous CD run if a new push happens
@@ -23,6 +23,14 @@ jobs:
     release:
         name: Build and Push Dovker Image to Github Container Registry
         runs-on: ubuntu-latest
+
+        # If CI failed — CD job is skipped entirely. Nothing is pushed.
+
+
+        if: >
+              github.event.workflow_run.conclusion == 'success' &&
+              github.event.workflow_run.head_branch == 'main'
+
     
         permissions:
             contents: read
