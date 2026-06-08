@@ -186,7 +186,7 @@ jobs:
             - name: Debug Store in CI
               run: |
                 echo "=== /store direct response ==="
-                curl -s http://localhost/store
+                curl -s http://localhost/temperature
                 
                 echo "=== app logs after store call ==="
                 kubectl logs -l app=hivebox -n hivebox --tail=30
