@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["Continuous Integration"]
     types: [completed]
-
+    branches: [main]
 
 
 # Cancel previous CD run if a new push happens

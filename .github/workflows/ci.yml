@@ -1,9 +1,10 @@
 name: Continuous Integration
 
 on:
-
-    pull_request:
-        branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 # Cancel previous runs on the same PR — saves runner minutes
 # Why: if you push multiple commits quickly, only the latest run matters
