@@ -2,7 +2,7 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [**]
+    branches: ["**"]
   workflow_dispatch:        # allows manual trigger from GitHub UI
 
 # Cancel previous runs on the same PR — saves runner minutes
