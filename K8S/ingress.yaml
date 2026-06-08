@@ -13,8 +13,17 @@ metadata:
   annotations:
     # Use Ingress-Nginx as the controller that we donwloaded
     nginx.ingress.kubernetes.io/rewrite-target: /
+
+    # Redirect all HTTP traffic to HTTPS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  # TLS configuration — references the secret created above
+  tls:
+    - hosts:
+        - hivebox.local
+      secretName: hivebox-tls
+      # Why hivebox-tls: must match the secret name created in Step 2
   rules:
     - http:
         paths:
