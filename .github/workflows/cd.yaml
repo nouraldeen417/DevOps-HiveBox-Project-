@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["Continuous Integration"]
     types: [completed]
-    branches: [main]
+
 
 
 # Cancel previous CD run if a new push happens
@@ -43,7 +43,7 @@ jobs:
               with:
                 # Forces checking out the exact commit/branch that triggered the CI workflow run
                 ref: ${{ github.event.workflow_run.head_sha }}
-            
+                
             - name: Set up Docker Buildx
               # Enables Docker layer caching — reuses unchanged layers
               # significantly speeds up builds when only code changes
