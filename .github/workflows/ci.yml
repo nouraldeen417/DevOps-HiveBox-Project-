@@ -3,8 +3,8 @@ name: Continuous Integration
 on:
     workflow_dispatch:        # allows manual trigger from GitHub UI
 
-    pull_request:
-        branches: [ main ]
+    push:
+      branches: [main]
 
 # Cancel previous runs on the same PR — saves runner minutes
 # Why: if you push multiple commits quickly, only the latest run matters
