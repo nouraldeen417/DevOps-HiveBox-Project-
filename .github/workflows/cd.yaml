@@ -24,12 +24,8 @@ jobs:
     release:
         name: Build and Push Dovker Image to Github Container Registry
         runs-on: ubuntu-latest
-
         # If CI failed — CD job is skipped entirely. Nothing is pushed.
-
-
-        if: >
-              github.event.workflow_run.conclusion == 'success'
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     
         permissions:
@@ -44,6 +40,9 @@ jobs:
                 egress-policy: audit
             - name: checkout code
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+              with:
+                # Forces checking out the exact commit/branch that triggered the CI workflow run
+                ref: ${{ github.event.workflow_run.head_sha }}
             
             - name: Set up Docker Buildx
               # Enables Docker layer caching — reuses unchanged layers
