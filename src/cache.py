@@ -1,6 +1,5 @@
 """Valkey (Redis-compatible) caching layer."""
 import json
-import time
 import redis
 
 from src.config import VALKEY_HOST, VALKEY_PORT, CACHE_TTL_SECONDS

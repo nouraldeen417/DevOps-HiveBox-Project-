@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hivebox
+description: HiveBox - senseBox temperature monitoring app
+type: application
+version: 0.1.0
+appVersion: "0.0.2"

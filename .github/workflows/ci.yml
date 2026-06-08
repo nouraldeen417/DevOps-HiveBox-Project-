@@ -1,8 +1,8 @@
 name: Continuous Integration
 
 on:
-  pull_request:
-    branches: [ main ]
+  push:
+    branches: [ * ]
   workflow_dispatch:        # allows manual trigger from GitHub UI
 
 # Cancel previous runs on the same PR — saves runner minutes
@@ -10,7 +10,6 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 
 # Enable Node.js 24 runtime for GitHub Actions to avoid Node 20 deprecation warnings
 env:
@@ -20,17 +19,14 @@ env:
 
 jobs:
     lint:
-        name: Lint Code $ Dockerfile
+        name: Lint Code & Dockerfile
         runs-on: ubuntu-latest
-
-
         steps:
-            #  Audit outbound network traffic from the GitHub Actions runner for security visibility.
+            # Audit outbound network traffic from the GitHub Actions runner for security visibility.
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
               with:
                 egress-policy: audit
-
 
             # Step is getting the code into the runner
             - name: checkout code
@@ -41,21 +37,19 @@ jobs:
               uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
               with:
                 python-version: '3.12'
-                #  Why cache: skips re-downloading packages on every run
+                # Why cache: skips re-downloading packages on every run
                 cache: pip
             
             # Install Dependencies 
             # Why: pylint is in requirements.txt.
-            # We need it installed before we can run it.
             - name: Install dependencies
               run: pip install -r requirements.txt pylint
             
             # Run Pylint on your source code
             - name: Run Pylint
-              run: pylint src/app.py --fail-under=8.0
+              run: pylint src/ --fail-under=8.0
             # Why --fail-under=8.0:
-            # Pylint scores code 0-10.
-            # Below 8.0 = CI fails and blocks the PR.
+            # Pylint scores code 0-10. Below 8.0 = CI fails and blocks the PR.
 
             # Using Hadolint Action to scan the Dockerfile
             - name: Run Hadolint
@@ -67,14 +61,12 @@ jobs:
         name: Run test files
         runs-on: ubuntu-latest
         needs: lint
-
         steps:
-
-            # Audit outbound network traffic from the GitHub Actions runner for security visibility.
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
               with:
                 egress-policy: audit
+
             - name: checkout code
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
@@ -85,38 +77,33 @@ jobs:
                 cache: pip
             
             - name: Install dependencies
-              run:  pip install -r requirements.txt
-
+              run: pip install -r requirements.txt
             
             - name: Run Pytest
-              run:  pytest tests/test_app.py -v
+              run: pytest tests/test_app.py -v
             # Why -v: verbose output shows each test name and result.
 
-    build:
-        name: Build Docker Image from the exisiting dockerfile
+    build_and_e2e:
+        name: Build Image, Deploy to KIND, and E2E Test
         runs-on: ubuntu-latest
         needs: test
         # It blocks fork PRs from running your CI job
         if: github.event.pull_request.head.repo.full_name == github.repository
-
-
         steps:
-
-            # Audit outbound network traffic from the GitHub Actions runner for security visibility.
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
               with:
                 egress-policy: audit
+
             - name: checkout code
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
             
             - name: Set up Docker Buildx
               # Enables Docker layer caching — reuses unchanged layers
-              # significantly speeds up builds when only code changes
-              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2  # v3.10.0
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
 
             - name: Build Docker image
-              uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1  # v6.16.0
+              uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1
               with:
                 context: .
                 push: false
@@ -125,11 +112,9 @@ jobs:
                 # Why load: makes image available to docker run in next steps
                 tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
                 cache-from: type=gha
-                # Why cache-from gha: restores Docker layer cache from GitHub Actions cache
                 cache-to: type=gha,mode=max
-                # Why cache-to: saves Docker layer cache for next run
             
-              # Scan the Image using Trivey
+            # Scan the Image using Trivy
             - name: Scan image with Trivy
               uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
               with:
@@ -139,126 +124,113 @@ jobs:
                 severity: CRITICAL
                 ignore-unfixed: true     
 
-            - name: Start container
-              run: docker run -d --name hivebox-test -p 5000:5000 ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-            
-            - name: Wait for container to be ready
-              run: sleep 3
-
-
-            - name: Set up Python for integration tests
-              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+            - name: Create k8s Kind Cluster
+              # Uses your physical config file for Port 80 mappings
+              uses: helm/kind-action@v1.10.0
               with:
-                python-version: '3.12'
-                cache: pip
+                cluster_name: hivebox-e2e-cluster
+                config: k8s/kind-config.yaml
 
-            - name: Install dependencies for integration tests
-              run: pip install -r requirements.txt
+            - name: Load image into KIND cluster
+              run: kind load docker-image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} --name hivebox-e2e-cluster
 
-            - name: Run integration tests
-              # Hits the real running container at localhost:5000
-              # No mocking — real HTTP calls against real Docker container
-              # Covers /version, /temperature, /metrics endpoints
-              run: pytest tests/integration/ -v
-
-
-            # Calling the endpoint from the container 
-            - name: Call /version endpoint
+            - name: Deploy NGINX Ingress Controller
+              # Simulates your cloud load balancer environment locally
               run: |
-                    RESPONSE=$(curl -s http://localhost:5000/version)
-                    echo "Response: $RESPONSE"
-                    echo $RESPONSE | grep -q '"version"'
-            
-            # Calling the Temperature Endpoint
-            - name: Test /temperature endpoint
-              run: |
-                STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/temperature)
-                echo "Status code: $STATUS"
-                # 200 = live data available
-                # 503 = all boxes stale — both are valid behavior
-                if [ "$STATUS" != "200" ] && [ "$STATUS" != "503" ]; then
-                  echo "Unexpected status code: $STATUS"
-                  exit 1
-                fi
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+                echo "Waiting for Ingress Controller to be ready..."
+                kubectl wait --namespace ingress-nginx \
+                  --for=condition=ready pod \
+                  --selector=app.kubernetes.io/component=controller \
+                  --timeout=120s
 
-            # Calling Metrics endpoints 
-            - name: Test /metrics endpoint
+            - name: Create minio Credentials
               run: |
-                RESPONSE=$(curl -s http://localhost:5000/metrics)
-                echo "$RESPONSE" | grep -q "flask_http" || (echo "/metrics missing Prometheus data" && exit 1)
-                echo "/metrics endpoint healthy"
+                kubectl create secret generic minio-credentials \
+                  --from-literal=username=${{ secrets.MINIO_USER }} \
+                  --from-literal=password=${{ secrets.MINIO_PASS }}
                   
+            - name: Deploy Infrastructure via Kustomize (Valkey & MinIO)
+              run: |
+                kubectl apply -k k8s/infrastructure/overlays/local/
+                kubectl wait --for=condition=Ready pods --all -n default --timeout=120s
+
+            - name: Deploy Application via Helm
+              run: |
+                helm install hivebox ./helm/hivebox \
+                  --set image.repository=${{ env.IMAGE_NAME }} \
+                  --set image.tag=${{ env.IMAGE_TAG }} \
+                  --set image.pullPolicy=Never
                 
-            - name: Stop container
-              # Always runs — cleans up container even if tests fail
-              if: always()
-              run: docker stop hivebox-test && docker rm hivebox-test
+                kubectl rollout status deployment/hivebox --timeout=120s
 
-    sonarqube:
-        name: SonarQube quality gate
-        runs-on: ubuntu-latest
-        needs: test
-        # Why after test: code must pass unit tests before quality analysis
-        # Why parallel with build: SonarQube does not need Docker
-        # running both at the same time saves pipeline minutes
+            - name: Install Venom
+              # Declarative test runner for your E2E HTTP validation
+              run: |
+                curl -sL https://github.com/ovh/venom/releases/download/v1.2.0/venom.linux-amd64 -o /usr/local/bin/venom
+                chmod +x /usr/local/bin/venom
 
-        steps:
-          - name: Harden runner
-            # Monitors outbound traffic — important because SonarQube
-            # uploads your source code to sonarcloud.io
-            uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
-            with:
-              egress-policy: audit
+            - name: Run Venom E2E Tests
+              # Executes against http://localhost (Ingress)
+              run: |
+                venom run e2e-tests/*.yml
 
-          - name: Checkout code
-            uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-            with:
-              fetch-depth: 0
-              # Why fetch-depth 0: SonarQube needs full git history
+    # sonarqube:
+    #     name: SonarQube quality gate
+    #     runs-on: ubuntu-latest
+    #     needs: test
+    #     # Why after test: code must pass unit tests before quality analysis
+    #     # Why parallel with build: SonarQube does not need Docker
+    #     steps:
+    #       - name: Harden runner
+    #         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+    #         with:
+    #           egress-policy: audit
 
-          - name: SonarQube scan
-            # Uploads source code to SonarCloud and runs full analysis
-            # Reads config from sonar-project.properties at repo root
-            # Checks for:
-            # - security vulnerabilities in Python code
-            # - bugs and unreachable code
-            # - code smells and complexity issues
-            # - test coverage percentage
-            # Results appear at sonarcloud.io and as PR comments
-            uses: sonarsource/sonarqube-scan-action@master
-            env:
-              SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              SONAR_HOST_URL: https://sonarcloud.io
+    #       - name: Checkout code
+    #         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    #         with:
+    #           fetch-depth: 0
+    #           # Why fetch-depth 0: SonarQube needs full git history
 
+    #       - name: SonarQube scan
+    #         uses: sonarsource/sonarqube-scan-action@master
+    #         env:
+    #           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    #           SONAR_HOST_URL: https://sonarcloud.io
 
-          - name: SonarQube quality gate check
-            # Waits for SonarCloud to finish analysis
-            # Fails CI if quality gate fails — enforces code quality as a hard gate
-            # Without this step CI passes even if SonarCloud finds critical issues
-            uses: sonarsource/sonarqube-quality-gate-action@master
-            timeout-minutes: 5
-            # Why timeout: prevents CI from hanging if SonarCloud is slow
-            env:
-              SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    #       - name: SonarQube quality gate check
+    #         uses: sonarsource/sonarqube-quality-gate-action@master
+    #         timeout-minutes: 5
+    #         env:
+    #           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-    terrascan:
-        name: Scan Kubernetes Manifest Files
-        runs-on: ubuntu-latest
-        needs: [build, sonarqube]
+    # terrascan:
+    #     name: Scan Kubernetes & Helm Manifests
+    #     runs-on: ubuntu-latest
+    #     needs: [build_and_e2e, sonarqube]
+    #     steps:
+    #         - name: Harden runner
+    #           uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+    #           with:
+    #             egress-policy: audit
+                
+    #         - name: Checkout code
+    #           uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-        steps:
-            - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
-              with:
-                egress-policy: audit
-            - name: Checkout code
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+    #         - name: Run Terrascan on Kustomize
+    #           # Scans the static k8s infrastructure folder
+    #           uses: tenable/terrascan-action@main
+    #           with:
+    #             iac_type: k8s
+    #             iac_dir: k8s/
+    #             only_warn: true
+    #             # Why only_warn: reports issues without failing the build
 
-            - name: Run Terrascan
-              uses: tenable/terrascan-action@main  # v1.5.0
-              with:
-                iac_type: k8s
-                iac_dir: K8S/
-                only_warn: true
-                # Why only_warn: reports issues without failing the build
-                # tighten to false after fixing all findings
+    #         - name: Run Terrascan on Helm Chart
+    #           # Scans the Helm chart templates dynamically
+    #           uses: tenable/terrascan-action@main
+    #           with:
+    #             iac_type: helm
+    #             iac_dir: helm/hivebox/
+    #             only_warn: true

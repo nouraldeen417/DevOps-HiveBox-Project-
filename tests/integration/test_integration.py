@@ -1,8 +1,7 @@
 """Integration tests for HiveBox API — requires running server."""
 import requests
-import pytest
 
-BASE_URL = "http://localhost:5000"
+BASE_URL = "http://localhost"
 
 
 # ── /version ───────────────────────────────────────────────────────────────
@@ -70,7 +69,6 @@ def test_readyz_response_shape():
 
 
 # ── /store ─────────────────────────────────────────────────────────────────
-@pytest.mark.skip(reason="Requires MinIO — run after K8s deploy")
 def test_store_returns_valid_status_code():
     """Test store returns 200 or 503."""
     response = requests.get(f"{BASE_URL}/store", timeout=5)

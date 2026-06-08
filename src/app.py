@@ -5,7 +5,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.config import APP_VERSION, SENSEBOX_IDS
 from src.temperature import get_temperature_from_box, get_temperature_status
-from src.cache import get_cached_temperature, set_cached_temperature, is_cache_fresh, get_cache_age
+from src.cache import get_cached_temperature, set_cached_temperature, is_cache_fresh
 from src.storage import store_temperature
 
 app = Flask(__name__)

@@ -13,3 +13,7 @@ metadata:
 data:
   # Comma-separated senseBox IDs — read by app.py via os.environ.get()
   SENSEBOX_IDS: "5eba5fbad46fb8001b799786,5c21ff8f919bf8001adf2488,5ade1acf223bd80019a1011c"
+  VALKEY_HOST: "valkey"
+  VALKEY_PORT: "6379"
+  MINIO_ENDPOINT: "minio:9000"
+  MINIO_BUCKET: "hivebox"

@@ -30,19 +30,19 @@ spec:
       containers:
         - name: hivebox
           # Image will be updated by CD pipeline after every merge to main
-          image: ghcr.io/moelgenady/devops-hivebox:latest
-          imagePullPolicy: Always
+          # image: ghcr.io/moelgenady/devops-hivebox:latest
+          image: hivebox:latest
+          imagePullPolicy: Never
 
           ports:
             - containerPort: 5000
 
           # Read senseBox IDs from the ConfigMap
-          env:
-            - name: SENSEBOX_IDS
-              valueFrom:
-                configMapKeyRef:
-                  name: hivebox-config
-                  key: SENSEBOX_IDS
+          envFrom:
+            - configMapRef:
+                name: hivebox-config
+            - secretRef:
+                name: hivebox-secret
 
           # Resource limits — prevents one pod from starving the node
           resources:
@@ -62,9 +62,10 @@ spec:
             periodSeconds: 15
 
           # Readiness probe — pod only receives traffic when this passes
+          # /readyz is correct here — checks app can actually serve meaningful data
           readinessProbe:
             httpGet:
-              path: /version
+              path: /readyz
               port: 5000
             initialDelaySeconds: 5
             periodSeconds: 10
