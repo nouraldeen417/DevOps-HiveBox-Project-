@@ -176,6 +176,13 @@ jobs:
                 
                 echo "=== APPLICATION LOGS ==="
                 kubectl logs -l app.kubernetes.io/name=hivebox -n hivebox --all-containers=true
+            - name: Wait for all pods to be ready
+              run: |
+                kubectl wait --for=condition=Ready pods --all -n hivebox --timeout=200s
+                echo "=== Final pod status ==="
+                kubectl get pods -n hivebox
+                echo "=== Endpoints ==="
+                kubectl get endpoints -n hivebox
             - name: Debug Store in CI
               run: |
                 echo "=== /store direct response ==="
