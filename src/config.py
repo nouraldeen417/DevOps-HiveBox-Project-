@@ -9,7 +9,7 @@ SENSEBOX_IDS = os.environ.get(
 ).split(",")
 
 OPENSENSEMAP_API = "https://api.opensensemap.org/boxes"
-MAX_DATA_AGE_HOURS = 24
+MAX_DATA_AGE_HOURS = 1
 CACHE_TTL_SECONDS = 300  # 5 minutes
 
 VALKEY_HOST = os.environ.get("VALKEY_HOST", "localhost")
