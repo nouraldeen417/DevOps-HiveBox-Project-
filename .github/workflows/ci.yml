@@ -183,13 +183,17 @@ jobs:
                 kubectl get pods -n hivebox
                 echo "=== Endpoints ==="
                 kubectl get endpoints -n hivebox
-            - name: Debug Store in CI
+            - name: Debug temperature from CI runner
               run: |
-                echo "=== /store direct response ==="
+                echo "=== Direct API call from runner ==="
+                curl -s "https://api.opensensemap.org/boxes/5eba5fbad46fb8001b799786?format=json" | \
+                  python3 -c "import json,sys; d=json.load(sys.stdin); print('lastMeasurement:', d['sensors'][0].get('lastMeasurement'))"
+                
+                echo "=== Temperature endpoint ==="
                 curl -s http://localhost/temperature
                 
-                echo "=== app logs after store call ==="
-                kubectl logs -l app=hivebox -n hivebox --tail=30
+                echo "=== App logs ==="
+                kubectl logs -l app=hivebox -n hivebox --tail=20
             - name: Install Venom
               # Declarative test runner for your E2E HTTP validation
               run: |
