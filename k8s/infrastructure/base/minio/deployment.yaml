@@ -13,25 +13,32 @@ spec:
       labels:
         app: minio
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       containers:
         - name: minio
           image: minio/minio:latest
           args:
             - server
             - /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
           ports:
             - containerPort: 9000
+
+          volumeMounts:
+            - name: minio-credentials
+              mountPath: /etc/minio/secrets
+              readOnly: true
           env:
-            - name: MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: minio-credentials
-                  key: username
-            - name: MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: minio-credentials
-                  key: password
+            - name: MINIO_ROOT_USER_FILE
+              value: /etc/minio/secrets/username
+            - name: MINIO_ROOT_PASSWORD_FILE
+              value: /etc/minio/secrets/password
           resources:
             requests:
               memory: "128Mi"
@@ -39,3 +46,7 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "300m"
+      volumes:
+        - name: minio-credentials
+          secret:
+            secretName: minio-credentials

@@ -13,9 +13,17 @@ spec:
       labels:
         app: valkey
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       containers:
         - name: valkey
           image: valkey/valkey:8
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
           ports:
             - containerPort: 6379
           resources:

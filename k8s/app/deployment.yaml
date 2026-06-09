@@ -1,7 +1,3 @@
-# deployment.yaml
-# Tells Kubernetes what to run and how many copies to keep alive.
-# If a pod crashes, Kubernetes automatically restarts it.
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,41 +6,43 @@ metadata:
   labels:
     app: hivebox
 spec:
-  # Run 2 copies of the app for reliability
   replicas: 2
-
   selector:
     matchLabels:
       app: hivebox
-
   template:
     metadata:
       labels:
         app: hivebox
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/hivebox: runtime/default
     spec:
-      # Security: never run as root
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
 
       containers:
         - name: hivebox
-          # Image will be updated by CD pipeline after every merge to main
-          # image: ghcr.io/moelgenady/devops-hivebox:latest
           image: hivebox:latest
           imagePullPolicy: Never
-
           ports:
             - containerPort: 5000
 
-          # Read senseBox IDs from the ConfigMap
+          # Security moved to container level (fixes terrascan false positives)
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true      # add this
+            runAsUser: 1000         # add this
+
           envFrom:
             - configMapRef:
                 name: hivebox-config
             - secretRef:
                 name: hivebox-secret
 
-          # Resource limits — prevents one pod from starving the node
           resources:
             requests:
               cpu: "100m"
@@ -53,7 +51,6 @@ spec:
               cpu: "250m"
               memory: "256Mi"
 
-          # Liveness probe — Kubernetes restarts the pod if this fails
           livenessProbe:
             httpGet:
               path: /version
@@ -61,8 +58,6 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 15
 
-          # Readiness probe — pod only receives traffic when this passes
-          # /readyz is correct here — checks app can actually serve meaningful data
           readinessProbe:
             httpGet:
               path: /readyz
