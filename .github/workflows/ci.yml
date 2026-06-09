@@ -86,7 +86,7 @@ jobs:
     build_and_e2e:
         name: Build Image, Deploy to KIND, and E2E Test
         runs-on: ubuntu-latest
-        needs: test
+        # needs: test
         # It blocks fork PRs from running your CI job
         
         steps:
