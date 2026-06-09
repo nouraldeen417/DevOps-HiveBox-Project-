@@ -130,7 +130,12 @@ jobs:
               with:
                 cluster_name: hivebox-e2e-cluster
                 config: k8s/kind-config.yaml
-
+            - name: Fix pod DNS
+              run: |
+                kubectl -n kube-system get configmap coredns -o yaml | \
+                  sed 's|forward . /etc/resolv.conf|forward . 8.8.8.8 8.8.4.4|' | \
+                  kubectl apply -f -
+                kubectl -n kube-system delete pod -l k8s-app=kube-dns
             - name: Load image into KIND cluster
               run: kind load docker-image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} --name hivebox-e2e-cluster
 
