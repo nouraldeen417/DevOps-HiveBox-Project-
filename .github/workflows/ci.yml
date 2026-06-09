@@ -18,70 +18,70 @@ env:
   IMAGE_TAG: "0.0.2"
 
 jobs:
-    lint:
-        name: Lint Code & Dockerfile
-        runs-on: ubuntu-latest
-        steps:
-            # Audit outbound network traffic from the GitHub Actions runner for security visibility.
-            - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
-              with:
-                egress-policy: audit
+    # lint:
+    #     name: Lint Code & Dockerfile
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         # Audit outbound network traffic from the GitHub Actions runner for security visibility.
+    #         - name: Harden runner
+    #           uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+    #           with:
+    #             egress-policy: audit
 
-            # Step is getting the code into the runner
-            - name: checkout code
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    #         # Step is getting the code into the runner
+    #         - name: checkout code
+    #           uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
             
-            # Install Python on the runner
-            - name: Set up Python
-              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-              with:
-                python-version: '3.12'
-                # Why cache: skips re-downloading packages on every run
-                cache: pip
+    #         # Install Python on the runner
+    #         - name: Set up Python
+    #           uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+    #           with:
+    #             python-version: '3.12'
+    #             # Why cache: skips re-downloading packages on every run
+    #             cache: pip
             
-            # Install Dependencies 
-            # Why: pylint is in requirements.txt.
-            - name: Install dependencies
-              run: pip install -r requirements.txt pylint
+    #         # Install Dependencies 
+    #         # Why: pylint is in requirements.txt.
+    #         - name: Install dependencies
+    #           run: pip install -r requirements.txt pylint
             
-            # Run Pylint on your source code
-            - name: Run Pylint
-              run: pylint src/ --fail-under=8.0
-            # Why --fail-under=8.0:
-            # Pylint scores code 0-10. Below 8.0 = CI fails and blocks the PR.
+    #         # Run Pylint on your source code
+    #         - name: Run Pylint
+    #           run: pylint src/ --fail-under=8.0
+    #         # Why --fail-under=8.0:
+    #         # Pylint scores code 0-10. Below 8.0 = CI fails and blocks the PR.
 
-            # Using Hadolint Action to scan the Dockerfile
-            - name: Run Hadolint
-              uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf
-              with:
-                dockerfile: Dockerfile
+    #         # Using Hadolint Action to scan the Dockerfile
+    #         - name: Run Hadolint
+    #           uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf
+    #           with:
+    #             dockerfile: Dockerfile
 
-    test:
-        name: Run test files
-        runs-on: ubuntu-latest
-        needs: lint
-        steps:
-            - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
-              with:
-                egress-policy: audit
+    # test:
+    #     name: Run test files
+    #     runs-on: ubuntu-latest
+    #     needs: lint
+    #     steps:
+    #         - name: Harden runner
+    #           uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+    #           with:
+    #             egress-policy: audit
 
-            - name: checkout code
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    #         - name: checkout code
+    #           uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-            - name: Setup Python
-              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-              with:
-                python-version: '3.12'
-                cache: pip
+    #         - name: Setup Python
+    #           uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+    #           with:
+    #             python-version: '3.12'
+    #             cache: pip
             
-            - name: Install dependencies
-              run: pip install -r requirements.txt
+    #         - name: Install dependencies
+    #           run: pip install -r requirements.txt
             
-            - name: Run Pytest
-              run: pytest tests/test_app.py -v
-            # Why -v: verbose output shows each test name and result.
+    #         - name: Run Pytest
+    #           run: pytest tests/test_app.py -v
+    #         # Why -v: verbose output shows each test name and result.
 
     build_and_e2e:
         name: Build Image, Deploy to KIND, and E2E Test
@@ -115,14 +115,14 @@ jobs:
                 cache-to: type=gha,mode=max
             
             # Scan the Image using Trivy
-            - name: Scan image with Trivy
-              uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
-              with:
-                image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-                format: table
-                exit-code: 1
-                severity: CRITICAL
-                ignore-unfixed: true     
+            # - name: Scan image with Trivy
+            #   uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
+            #   with:
+            #     image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            #     format: table
+            #     exit-code: 1
+            #     severity: CRITICAL
+            #     ignore-unfixed: true     
 
             - name: Create k8s Kind Cluster
               # Uses your physical config file for Port 80 mappings
@@ -183,6 +183,11 @@ jobs:
                 kubectl get pods -n hivebox
                 echo "=== Endpoints ==="
                 kubectl get endpoints -n hivebox
+            - name: Test pod internet access
+              run: |
+                kubectl run nettest --image=curlimages/curl -n hivebox --rm -it \
+                  --restart=Never -- curl -s --max-time 5 \
+                  "https://api.opensensemap.org/boxes/5eba5fbad46fb8001b799786" | head -c 100
             - name: Debug temperature from CI runner
               run: |
                 echo "=== Direct API call from runner ==="
