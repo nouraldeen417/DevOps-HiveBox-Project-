@@ -14,8 +14,6 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}
-      annotations:
-        container.apparmor.security.beta.kubernetes.io/{{ .Release.Name }}: runtime/default  
     spec:
       securityContext:
         runAsNonRoot: true
