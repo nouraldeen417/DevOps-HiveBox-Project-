@@ -14,7 +14,7 @@ def get_temperature_from_box(box_id):
     try:
         response = requests.get(
             f"{OPENSENSEMAP_API}/{box_id}",
-            timeout=5
+            timeout=30
         )
         response.raise_for_status()
         data = response.json()
