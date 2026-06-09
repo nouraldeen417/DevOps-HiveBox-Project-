@@ -29,16 +29,22 @@ spec:
             readOnlyRootFilesystem: true
           ports:
             - containerPort: 9000
-
           volumeMounts:
-            - name: minio-credentials
-              mountPath: /etc/minio/secrets
-              readOnly: true
+            - name: minio-data
+              mountPath: /data
+             
+
           env:
-            - name: MINIO_ROOT_USER_FILE
-              value: /etc/minio/secrets/username
-            - name: MINIO_ROOT_PASSWORD_FILE
-              value: /etc/minio/secrets/password
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: username
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: password
           resources:
             requests:
               memory: "128Mi"
@@ -47,8 +53,5 @@ spec:
               memory: "256Mi"
               cpu: "300m"
       volumes:
-        - name: minio-credentials
-          secret:
-            secretName: minio-credentials
         - name: minio-data
-          emptyDir: {}               # writable in-memory volume
+          emptyDir: {}

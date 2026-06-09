@@ -32,15 +32,17 @@ spec:
           envFrom:
             - configMapRef:
                 name: hivebox-config
-          volumeMounts:
-            - name: minio-credentials
-              mountPath: /etc/hivebox/secrets
-              readOnly: true
           env:
-            - name: MINIO_ACCESS_KEY_FILE
-              value: /etc/hivebox/secrets/username
-            - name: MINIO_SECRET_KEY_FILE
-              value: /etc/hivebox/secrets/password
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: username
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: password
 
           resources:
             requests:
@@ -65,8 +67,3 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 10
-
-      volumes:
-        - name: minio-credentials
-          secret:
-            secretName: minio-credentials
