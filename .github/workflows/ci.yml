@@ -188,6 +188,16 @@ jobs:
                 kubectl run nettest --image=curlimages/curl -n hivebox --rm -it \
                   --restart=Never -- curl -s --max-time 5 \
                   "https://api.opensensemap.org/boxes/5eba5fbad46fb8001b799786" | head -c 100
+            - name: Debug temperature logic
+              run: |
+                kubectl exec -n hivebox deployment/hivebox -- python3 -c "
+                from src.temperature import get_temperature_from_box
+                from src.config import SENSEBOX_IDS
+                for box_id in SENSEBOX_IDS:
+                    result = get_temperature_from_box(box_id)
+                    print(f'Box {box_id}: {result}')
+                "
+            
             - name: Debug temperature from CI runner
               run: |
                 echo "=== Direct API call from runner ==="
