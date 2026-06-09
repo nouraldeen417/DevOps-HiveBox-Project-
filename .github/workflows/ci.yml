@@ -198,17 +198,31 @@ jobs:
                     print(f'Box {box_id}: {result}')
                 "
             
-            - name: Debug temperature from CI runner
+            - name: Debug temperature logic detailed
               run: |
-                echo "=== Direct API call from runner ==="
-                curl -s "https://api.opensensemap.org/boxes/5eba5fbad46fb8001b799786?format=json" | \
-                  python3 -c "import json,sys; d=json.load(sys.stdin); print('lastMeasurement:', d['sensors'][0].get('lastMeasurement'))"
-                
-                echo "=== Temperature endpoint ==="
-                curl -s http://localhost/temperature
-                
-                echo "=== App logs ==="
-                kubectl logs -l app=hivebox -n hivebox --tail=20
+                kubectl exec -n hivebox deployment/hivebox -- python3 -c "
+                import requests, time
+                from datetime import datetime, timezone, timedelta
+
+                box_id = '5eba5fbad46fb8001b799786'
+                url = f'https://api.opensensemap.org/boxes/{box_id}'
+                print(f'Fetching: {url}')
+                start = time.time()
+                try:
+                    r = requests.get(url, timeout=30)
+                    print(f'Status: {r.status_code}, Time: {time.time()-start:.2f}s')
+                    data = r.json()
+                    for s in data.get('sensors', []):
+                        title = s.get('title')
+                        m = s.get('lastMeasurement')
+                        print(f'  title={title} | measurement={m}')
+                        if m:
+                            created_at = datetime.fromisoformat(m[\"createdAt\"].replace(\"Z\", \"+00:00\"))
+                            age = datetime.now(timezone.utc) - created_at
+                            print(f'  age={age}, max={timedelta(hours=1)}, too_old={age > timedelta(hours=1)}')
+                except Exception as e:
+                    print(f'ERROR: {type(e).__name__}: {e}')
+                "
             - name: Install Venom
               # Declarative test runner for your E2E HTTP validation
               run: |
