@@ -171,7 +171,7 @@ jobs:
                 helm install hivebox ./k8s/app/helm/hivebox -n hivebox \
                   --set image.repository=${{ env.IMAGE_NAME }} \
                   --set image.tag=${{ env.IMAGE_TAG }} \
-                  --set image.pullPolicy=Never
+                  --set image.pullPolicy=Never \
                   --set metrics.enabled=false
                 
                 kubectl wait --for=condition=Ready pods --all -n hivebox --timeout=200s
