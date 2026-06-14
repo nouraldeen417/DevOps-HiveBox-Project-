@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["Continuous Integration"]
     types: [completed]
+    branches: ["**"]
   workflow_dispatch:        # allows manual trigger from GitHub UI
 
 # Cancel previous CD run if a new push happens
