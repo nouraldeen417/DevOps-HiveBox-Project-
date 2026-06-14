@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+# roles/prometheus_grafana/vars/main.yml
+---
+prom_grafana_namespace: "monitoring"
+prom_grafana_release_name: "monitoring-stack"
+prom_grafana_repo_url: "https://prometheus-community.github.io/helm-charts"
+prom_grafana_chart_ref: "prometheus-community/kube-prometheus-stack"
+prom_grafana_chart_version: "61.3.0" # Pinning to a stable version
+

@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hivebox
+  # ArgoCD Applications must always be deployed into the argocd namespace
+  namespace: argocd 
+spec:
+  project: default
+  
+  # 1. Where is your Helm chart? (The Source)
+  source:
+    # Replace this with your actual Git repository URL
+    repoURL: 'https://github.com/your-username/hivebox.git' 
+    # targetRevision: HEAD 
+    
+    #for testing purposes, we are using a branch called phase-6. In production, you would typically use a tag or main branch.
+    targetRevision: phase-6     
+    # The exact path to your umbrella chart we worked on earlier
+    
+    path: k8s/app/helm/hivebox-stack
+    helm:
+      # Tell ArgoCD which values file to read
+      valueFiles:
+        - values.yaml
+        
+  # 2. Where is it going? (The Destination)
+  destination:
+    # This points to the internal cluster ArgoCD is currently running on
+    server: 'https://kubernetes.default.svc'
+    namespace: hivebox
+
+  # 3. How should it behave? (The Sync Policy)
+  syncPolicy:
+    automated:
+      # Automatically delete resources in the cluster if you remove them from Git
+      prune: true 
+      # Automatically revert manual kubectl changes back to the Git state
+      selfHeal: true 
+    syncOptions:
+      # Automatically create the 'hivebox' namespace if it doesn't exist
+      - CreateNamespace=true

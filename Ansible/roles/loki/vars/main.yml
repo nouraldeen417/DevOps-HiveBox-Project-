@@ -1,0 +1,8 @@
+#SPDX-License-Identifier: MIT-0
+# roles/loki/vars/main.yml
+---
+loki_namespace: "monitoring"
+loki_release_name: "monitoring-loki"
+loki_repo_url: "https://grafana.github.io/helm-charts"
+loki_chart_ref: "grafana/loki-stack"
+loki_chart_version: "2.10.2"

@@ -1,0 +1,10 @@
+# roles/argocd/vars/main.yml
+---
+argocd_namespace: "argocd"
+argocd_release_name: "argocd"
+argocd_repo_url: "https://argoproj.github.io/argo-helm"
+argocd_chart_ref: "argo/argo-cd"
+argocd_chart_version: "7.3.11" # Pinning to a stable version
+
+# Fallback state if deploy_state isn't defined globally
+argocd_state: "{{ deploy_state | default('present') }}"

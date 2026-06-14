@@ -1,0 +1,59 @@
+#SPDX-License-Identifier: MIT-0
+# roles/ingress_nginx/tasks/main.yml
+---
+- name: Add NGINX Ingress Helm repository
+  kubernetes.core.helm_repository:
+    name: ingress-nginx
+    repo_url: "{{ ingress_nginx_repo_url }}"
+
+- name: Ensure Ingress namespace exists
+  kubernetes.core.k8s:
+    name: "{{ ingress_nginx_namespace }}"
+    kind: Namespace
+    state: present
+
+- name: Install NGINX Ingress Controller optimized for Kind
+  kubernetes.core.helm:
+    name: "{{ ingress_nginx_release_name }}"
+    chart_ref: "{{ ingress_nginx_chart_ref }}"
+    release_namespace: "{{ ingress_nginx_namespace }}"
+    chart_version: "{{ ingress_nginx_chart_version }}"
+    update_repo_cache: true
+    wait: true
+
+- name: Wait for NGINX Ingress controller deployment to become ready
+  kubernetes.core.k8s_info:
+    kind: Deployment
+    # The default deployment name created by the ingress-nginx chart
+    name: "{{ ingress_nginx_release_name }}-controller" 
+    namespace: "{{ ingress_nginx_namespace }}"
+  register: ingress_deployment
+  # Wait until the 'readyReplicas' field exists and is at least 1
+  until: >
+    ingress_deployment.resources | length > 0 and
+    ingress_deployment.resources[0].status.readyReplicas is defined and
+    ingress_deployment.resources[0].status.readyReplicas > 0
+  retries: 30       # Try 30 times...
+  delay: 10         # ...every 10 seconds (Total 5 minutes timeout)
+  
+- name: Verify Ingress is ready (Success Message)
+  ansible.builtin.debug:
+    msg: "NGINX Ingress Controller is fully operational and ready to route traffic."
+
+# ==========================================
+# UNINSTALL / CLEANUP BLOCK
+# ==========================================
+- name: Uninstall NGINX Ingress Controller via Helm
+  kubernetes.core.helm:
+    name: "{{ ingress_nginx_release_name }}"
+    release_namespace: "{{ ingress_nginx_namespace }}"
+    state: absent
+    wait: true
+  when: helm_action == 'uninstall'
+
+- name: Remove Ingress Namespace
+  kubernetes.core.k8s:
+    name: "{{ ingress_nginx_namespace }}"
+    kind: Namespace
+    state: absent
+  when: helm_action == 'uninstall'

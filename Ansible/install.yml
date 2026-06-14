@@ -1,0 +1,79 @@
+---
+# ============================================================
+# K8s Cluster Setup — Install Playbook
+# Usage:
+#   ansible-playbook -i inventory/hosts.ini install.yml
+#
+# Override feature flags at runtime:
+#   ansible-playbook -i inventory/hosts.ini install.yml \
+#     -e "install_monitoring=false install_argo=false"
+# ============================================================
+
+- name: Prepare and verify Kubernetes cluster
+  hosts: kind_control_plane
+  gather_facts: true
+  become: false
+
+  pre_tasks:
+    - name: Show install plan
+      ansible.builtin.debug:
+        msg: |
+          ======================================
+          K8s Cluster Setup — Install Plan
+          ======================================
+          Helm            : {{ install_helm }}
+          Nginx Ingress   : {{ install_nginx_ingress }}
+          Monitoring      : {{ install_monitoring }}
+          Loki            : {{ install_loki }}
+          Argo CD         : {{ install_argo }}
+          ======================================
+
+  roles:
+    # Step 1 — Always verify the cluster first
+    - role: cluster-verification
+
+    # Step 2 — Helm (required by all other roles)
+    - role: helm
+      vars:
+        helm_action: install
+      when: install_helm
+
+    # Step 3 — Nginx Ingress
+    - role: nginx-ingress
+      vars:
+        helm_action: install
+      when: install_nginx_ingress
+    # Step 4 — Loki (log aggregation)
+    - role: loki
+      vars:
+        helm_action: install
+      when: install_loki
+
+    # Step 5 — Prometheus + Grafana
+    - role: monitoring
+      vars:
+        helm_action: install
+      when: install_monitoring
+
+    # Step 6 — Argo CD
+    - role: argo
+      vars:
+        helm_action: install
+      when: install_argo
+
+  post_tasks:
+    - name: Final summary
+      ansible.builtin.debug:
+        msg: |
+          ╔══════════════════════════════════════════╗
+          ║       Installation Complete ✅           ║
+          ╠══════════════════════════════════════════╣
+          ║ Nginx Ingress   : {{ 'installed' if install_nginx_ingress else 'skipped' }}
+          ║ Prometheus      : {{ 'installed' if install_monitoring else 'skipped' }}
+          ║ Grafana         : {{ 'installed' if install_monitoring else 'skipped' }}
+          ║ Loki            : {{ 'installed' if install_loki else 'skipped' }}
+          ║ Argo CD         : {{ 'installed' if install_argo else 'skipped' }}
+          ╚══════════════════════════════════════════╝
+          Port-forward commands:
+            Grafana  → kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
+            Argo CD  → kubectl port-forward svc/argo-cd-server 8080:80 -n argocd

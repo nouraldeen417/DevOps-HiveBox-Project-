@@ -1,7 +1,6 @@
 name: Continuous Deployment 
 
 on:
-
   workflow_run:
     workflows: ["Continuous Integration"]
     types: [completed]
@@ -15,13 +14,13 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  IMAGE_NAME: ghcr.io/moelgenady/devops-hivebox
+  IMAGE_NAME: ghcr.io/nouraldeen417/devops-hivebox
   IMAGE_TAG: "0.0.2"
 
 
 jobs:
     release:
-        name: Build and Push Dovker Image to Github Container Registry
+        name: Build and Push Docker Image to Github Container Registry
         runs-on: ubuntu-latest
 
 

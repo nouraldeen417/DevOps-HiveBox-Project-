@@ -1,0 +1,49 @@
+# roles/loki/tasks/main.yml
+---
+# ==========================================
+# INSTALLATION BLOCK
+# ==========================================
+- name: Add Grafana Helm repository for Loki
+  kubernetes.core.helm_repository:
+    name: grafana
+    repo_url: "{{ loki_repo_url }}"
+  when: helm_action == 'install'
+
+- name: Ensure Target Namespace exists for Loki
+  kubernetes.core.k8s:
+    name: "{{ loki_namespace }}"
+    kind: Namespace
+    state: present
+  when: helm_action == 'install'
+
+- name: Install loki-stack via Helm
+  kubernetes.core.helm:
+    name: "{{ loki_release_name }}"
+    chart_ref: "{{ loki_chart_ref }}"
+    release_namespace: "{{ loki_namespace }}"
+    chart_version: "{{ loki_chart_version }}"
+    update_repo_cache: true
+    wait: true
+    state: present
+    values:
+      loki:
+        # Uses fast, ephemeral storage safe for local testing loops
+        persistence:
+          enabled: false
+      promtail:
+        enabled: true
+      grafana:
+        # Prevents deploying an extra, redundant Grafana instance
+        enabled: false 
+  when: helm_action == 'install'
+
+# ==========================================
+# UNINSTALL / CLEANUP BLOCK
+# ==========================================
+- name: Uninstall loki-stack via Helm
+  kubernetes.core.helm:
+    name: "{{ loki_release_name }}"
+    release_namespace: "{{ loki_namespace }}"
+    state: absent
+    wait: true
+  when: helm_action == 'uninstall'

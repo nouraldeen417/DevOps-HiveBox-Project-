@@ -1,0 +1,50 @@
+# roles/argocd/tasks/main.yml
+---
+# ==========================================
+# INSTALLATION BLOCK
+# ==========================================
+- name: Add ArgoCD Helm repository
+  kubernetes.core.helm_repository:
+    name: argo
+    repo_url: "{{ argocd_repo_url }}"
+  when: helm_action == 'install'
+
+- name: Ensure ArgoCD namespace exists
+  kubernetes.core.k8s:
+    name: "{{ argocd_namespace }}"
+    kind: Namespace
+    state: present
+  when: helm_action == 'install'
+
+- name: Install ArgoCD via Helm
+  kubernetes.core.helm:
+    name: "{{ argocd_release_name }}"
+    chart_ref: "{{ argocd_chart_ref }}"
+    release_namespace: "{{ argocd_namespace }}"
+    chart_version: "{{ argocd_chart_version }}"
+    update_repo_cache: true
+    wait: true
+    state: present
+    values:
+      server:
+        extraArgs:
+          - --insecure # Bypasses complex local TLS setups for lab environments
+  when: helm_action == 'install'
+
+# ==========================================
+# UNINSTALL / CLEANUP BLOCK
+# ==========================================
+- name: Uninstall ArgoCD via Helm
+  kubernetes.core.helm:
+    name: "{{ argocd_release_name }}"
+    release_namespace: "{{ argocd_namespace }}"
+    state: absent
+    wait: true
+  when: helm_action == 'uninstall'
+
+- name: Remove ArgoCD Namespace
+  kubernetes.core.k8s:
+    name: "{{ argocd_namespace }}"
+    kind: Namespace
+    state: absent
+  when: helm_action == 'uninstall'

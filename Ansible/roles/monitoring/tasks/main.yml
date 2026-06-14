@@ -1,0 +1,58 @@
+# roles/prometheus_grafana/tasks/main.yml
+---
+# ==========================================
+# INSTALLATION BLOCK
+# ==========================================
+- name: Add Prometheus Community Helm repository
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: "{{ prom_grafana_repo_url }}"
+  when: helm_action == 'install'
+
+- name: Ensure Monitoring namespace exists
+  kubernetes.core.k8s:
+    name: "{{ prom_grafana_namespace }}"
+    kind: Namespace
+    state: present
+  when: helm_action == 'install'
+
+- name: Install kube-prometheus-stack via Helm
+  kubernetes.core.helm:
+    name: "{{ prom_grafana_release_name }}"
+    chart_ref: "{{ prom_grafana_chart_ref }}"
+    release_namespace: "{{ prom_grafana_namespace }}"
+    chart_version: "{{ prom_grafana_chart_version }}"
+    update_repo_cache: true
+    wait: true
+    state: present
+    values:
+      prometheus:
+        prometheusSpec:
+          # Crucial cross-namespace scraping changes
+          serviceMonitorSelectorNilUsesHelmValues: false
+          serviceMonitorNamespaceSelector: {} 
+          
+          # Thermal safeguards for local machines
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+      grafana:
+        adminPassword: "admin"
+        # Auto-connect cross-namespace Loki logging service
+        additionalDataSources: "{{ [{'name': 'Loki', 'type': 'loki', 'url': 'http://monitoring-loki.monitoring.svc.cluster.local:3100', 'access': 'proxy'}] if (install_loki | default(true) | bool) else [] }}"
+  when: helm_action == 'install'
+
+# ==========================================
+# UNINSTALL / CLEANUP BLOCK
+# ==========================================
+- name: Uninstall kube-prometheus-stack via Helm
+  kubernetes.core.helm:
+    name: "{{ prom_grafana_release_name }}"
+    release_namespace: "{{ prom_grafana_namespace }}"
+    state: absent
+    wait: true
+  when: helm_action == 'uninstall'

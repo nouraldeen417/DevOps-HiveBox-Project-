@@ -1,0 +1,7 @@
+---
+# Global Feature Flags for Cluster Setup
+install_helm: true
+install_nginx_ingress: true
+install_monitoring: true
+install_loki: true
+install_argo: true
