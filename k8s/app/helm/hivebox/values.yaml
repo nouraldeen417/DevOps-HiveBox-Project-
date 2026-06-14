@@ -34,3 +34,7 @@ config:
   valkeyPort: "6379"
   minioEndpoint: "minio:9000"
   minioBucket: "hivebox"
+
+metrics:
+  enabled: true
+  

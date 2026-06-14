@@ -172,6 +172,7 @@ jobs:
                   --set image.repository=${{ env.IMAGE_NAME }} \
                   --set image.tag=${{ env.IMAGE_TAG }} \
                   --set image.pullPolicy=Never
+                  --set metrics.enabled=false
                 
                 kubectl wait --for=condition=Ready pods --all -n hivebox --timeout=200s
             - name: Debug Pod Failure
