@@ -83,3 +83,9 @@ kubectl run debug \
   --restart=Never \
   -n hivebox \
   -- sh
+
+# Create a certificate that covers both localhost and hivebox.local
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout tls.key -out tls.crt \
+  -subj "/CN=localhost" \
+  -addext "subjectAltName=DNS:localhost,DNS:hivebox.local,DNS:*.local,IP:127.0.0.1"

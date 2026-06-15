@@ -13,9 +13,21 @@ spec:
   tls:
     - hosts:
         - {{ .Values.ingress.host }}
+        - localhost
+        - "*.local"
       secretName: {{ .Values.ingress.tlsSecret }}
   rules:
     - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}
+                port:
+                  number: {{ .Values.service.port }}
+    - host: localhost
       http:
         paths:
           - path: /
