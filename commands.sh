@@ -76,3 +76,10 @@ kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
 
 
 kind delete cluster
+# run a debug pod
+kubectl run debug \
+  --image=curlimages/curl \
+  --rm -it \
+  --restart=Never \
+  -n hivebox \
+  -- sh
