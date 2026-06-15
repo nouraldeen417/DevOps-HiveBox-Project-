@@ -14,9 +14,8 @@ concurrency:
 # Enable Node.js 24 runtime for GitHub Actions to avoid Node 20 deprecation warnings
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  IMAGE_NAME: hivebox
+  IMAGE_NAME: ghcr.io/nouraldeen417/devops-hivebox
   IMAGE_TAG: "0.0.2"
-
 jobs:
     lint:
         name: Lint Code & Dockerfile
@@ -258,3 +257,26 @@ jobs:
                 iac_type: helm
                 iac_dir: k8s/app/helm/hivebox/
                 only_warn: true
+    push:
+          - name: Log in to GitHub Container Registry
+            uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772  # v3.4.0
+            with:
+              registry: ghcr.io
+              username: ${{ github.actor }} # Automatically set by GitHub to the username that triggered the workflow.
+              password: ${{ secrets.GITHUB_TOKEN }} # Automatically created by GitHub for every repository. Every workflow gets it injected automatically
+
+          - name: Build the image and Push it 
+          # Builds and pushes 3 tags to ghcr.io:
+          #   :latest      — always newest
+          #   :0.0.2       — version tag matching app.py
+          #   :sha-abc1234 — exact commit for rollback
+            uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1  # v6.16.0
+            with:
+              context: .
+              push: true
+              tags: |
+                  ${{ env.IMAGE_NAME }}:latest
+                  ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+                  ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+              cache-from: type=gha
+              cache-to: type=gha,mode=max

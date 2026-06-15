@@ -23,7 +23,7 @@ kubectl create namespace hivebox
 # (Run this from the directory where your tls.cert and tls.key are saved)
 cd k8s/
 kubectl create secret tls hivebox-tls \
-  --cert=tls.cert \
+  --cert=tls.crt \
   --key=tls.key \
   -n hivebox
 
