@@ -18,15 +18,20 @@ ansible-playbook -i inventory/hosts.ini install.yml
 
 # 1. Create the application namespace
 kubectl create namespace hivebox
-
+cd .. 
 # 2. Inject your local TLS Certificates
 # (Run this from the directory where your tls.cert and tls.key are saved)
-cd k8s/
+# Create a certificate that covers both localhost and hivebox.local
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout tls.key -out tls.crt \
+  -subj "/CN=localhost" \
+  -addext "subjectAltName=DNS:localhost,DNS:hivebox.local,DNS:*.local,IP:127.0.0.1"
+
+# Create new secret with multi-host certificate
 kubectl create secret tls hivebox-tls \
   --cert=tls.crt \
   --key=tls.key \
   -n hivebox
-
 # 3. Inject your Application Secrets manually
 # (Replace with your actual keys for Django/DB/MinIO)
 kubectl create secret generic minio-credentials \
@@ -48,6 +53,13 @@ kubectl apply -f gitops/hivebox-application.yaml
 
 # Watch ArgoCD spin up your application in real-time
 kubectl get pods -n hivebox -w
+# run a debug pod if you want to test connectivity to your services from within the cluster
+kubectl run debug \
+  --image=curlimages/curl \
+  --rm -it \
+  --restart=Never \
+  -n hivebox \
+  -- sh
 
 
 ### **Phase 5: Accessing the Dashboards**
@@ -59,7 +71,7 @@ kubectl get pods -n hivebox -w
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
 
 # 2. Port-forward the ArgoCD UI (Open http://localhost:8080)
-kubectl port-forward svc/argo-cd-server 8080:80 -n argocd
+kubectl port-forward svc/argocd-server 8080:80 -n argocd
 # Username: admin
 # Password: <from the command above>
 
@@ -74,18 +86,4 @@ kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
 
 # When you are done testing and want to save CPU/RAM on your local machine, destroy the cluster completely. This guarantees your next test run is perfectly clean.
 
-
 kind delete cluster
-# run a debug pod
-kubectl run debug \
-  --image=curlimages/curl \
-  --rm -it \
-  --restart=Never \
-  -n hivebox \
-  -- sh
-
-# Create a certificate that covers both localhost and hivebox.local
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout tls.key -out tls.crt \
-  -subj "/CN=localhost" \
-  -addext "subjectAltName=DNS:localhost,DNS:hivebox.local,DNS:*.local,IP:127.0.0.1"
