@@ -258,6 +258,11 @@ jobs:
                 iac_dir: k8s/app/helm/hivebox/
                 only_warn: true
     push:
+        name: Scan Kubernetes & Helm Manifests
+        runs-on: ubuntu-latest
+        # needs: [build_and_e2e, sonarqube]
+        needs: terrascan
+        steps:
           - name: Log in to GitHub Container Registry
             uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772  # v3.4.0
             with:
