@@ -1,0 +1,24 @@
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorNamespaceSelector: {}
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+grafana:
+  adminPassword: "admin"
+{% if install_loki | default(true) | bool %}
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://monitoring-loki.monitoring.svc.cluster.local:3100
+      access: proxy
+      isDefault: false
+      jsonData:
+        maxLines: 1000
+{% endif %}
