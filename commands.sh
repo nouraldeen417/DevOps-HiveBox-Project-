@@ -29,7 +29,7 @@ kubectl create secret tls hivebox-tls \
 
 # 3. Inject your Application Secrets manually
 # (Replace with your actual keys for Django/DB/MinIO)
-kubectl create secret generic hivebox-app-secrets \
+kubectl create secret generic minio-credentials \
   --from-literal=username='minioadmin' \
   --from-literal=password='minioadmin' \
   -n hivebox

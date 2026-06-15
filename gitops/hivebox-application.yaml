@@ -10,14 +10,14 @@ spec:
   # 1. Where is your Helm chart? (The Source)
   source:
     # Replace this with your actual Git repository URL
-    repoURL: 'https://github.com/nouraldeen417/hivebox.git' 
+    repoURL: 'https://github.com/nouraldeen417/DevOps-HiveBox-Project-.git' 
     # targetRevision: HEAD 
     
     #for testing purposes, we are using a branch called phase-6. In production, you would typically use a tag or main branch.
     targetRevision: phase-6     
     # The exact path to your umbrella chart we worked on earlier
     
-    path: k8s/app/helm/hivebox-stack
+    path: k8s/app/helm/hivebox
     helm:
       # Tell ArgoCD which values file to read
       valueFiles:
