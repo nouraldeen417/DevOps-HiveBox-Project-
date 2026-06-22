@@ -324,8 +324,8 @@ jobs:
 
             - name: Update image tag in values.yaml
               run: |
-                yq e '.image.tag   = "${{ env.IMAGE_TAG }}"'   -i helm/hivebox/values.yaml
-                yq e '.app.version = "${{ env.IMAGE_TAG }}"'   -i helm/hivebox/values.yaml
+                yq e '.image.tag   = "${{ env.IMAGE_TAG }}"'   -i k8s/app/helm/hivebox/values.yaml 
+                yq e '.app.version = "${{ env.IMAGE_TAG }}"'   -i k8s/app/helm/hivebox/values.yaml 
 
             - name: Commit and push
               run: |
