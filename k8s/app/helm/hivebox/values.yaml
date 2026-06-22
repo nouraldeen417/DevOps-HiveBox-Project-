@@ -1,7 +1,9 @@
 # Default values for hivebox.
 
 replicaCount: 2
-
+app:
+  name: hivebox
+  version: 0.0.2
 image:
   repository: ghcr.io/nouraldeen417/devops-hivebox
   tag: 0.0.2

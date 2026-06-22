@@ -11,3 +11,4 @@ data:
   VALKEY_PORT: {{ .Values.config.valkeyPort | quote }}
   MINIO_ENDPOINT: {{ .Values.config.minioEndpoint | quote }}
   MINIO_BUCKET: {{ .Values.config.minioBucket | quote }}
+  APP_VERSION: {{ .Values.app.version | quote }}

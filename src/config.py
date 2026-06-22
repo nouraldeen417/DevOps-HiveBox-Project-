@@ -1,7 +1,6 @@
 """HiveBox configuration — all env vars and constants in one place."""
 import os
 
-APP_VERSION = "0.0.2"
 
 SENSEBOX_IDS = os.environ.get(
     "SENSEBOX_IDS",
@@ -11,7 +10,7 @@ SENSEBOX_IDS = os.environ.get(
 OPENSENSEMAP_API = "https://api.opensensemap.org/boxes"
 MAX_DATA_AGE_HOURS = 1
 CACHE_TTL_SECONDS = 300  # 5 minutes
-
+APP_VERSION = os.environ.get("APP_VERSION", "0.0.2")
 VALKEY_HOST = os.environ.get("VALKEY_HOST", "localhost")
 VALKEY_PORT = int(os.environ.get("VALKEY_PORT", "6379"))
 

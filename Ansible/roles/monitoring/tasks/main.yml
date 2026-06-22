@@ -21,6 +21,7 @@
     src: kube-prometheus-values.yml.j2
     dest: /tmp/kube-prometheus-values.yml
   when: helm_action == 'install'
+  
 - name: Install kube-prometheus-stack via Helm
   kubernetes.core.helm:
     name: "{{ prom_grafana_release_name }}"
