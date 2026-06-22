@@ -2,10 +2,12 @@
 from flask import Flask, jsonify
 from prometheus_flask_exporter import PrometheusMetrics
 from apscheduler.schedulers.background import BackgroundScheduler
-from src.metrics import temperature_gauge, temperature_status_gauge,boxes_total_gauge, boxes_used_gauge ,readyz_status_gauge, cache_age_gauge, cache_fresh_gauge ,store_operations_total, store_errors_total
+from src.metrics import (temperature_gauge, temperature_status_gauge,boxes_total_gauge,
+                         boxes_used_gauge ,readyz_status_gauge, cache_age_gauge, cache_fresh_gauge ,
+                         store_operations_total, store_errors_total )
 from src.config import APP_VERSION, SENSEBOX_IDS
 from src.temperature import get_temperature_from_box, get_temperature_status
-from src.cache import get_cached_temperature, set_cached_temperature, is_cache_fresh , get_cache_age, is_cache_fresh
+from src.cache import get_cached_temperature, set_cached_temperature, is_cache_fresh, get_cache_age
 from src.storage import store_temperature
 
 app = Flask(__name__)
