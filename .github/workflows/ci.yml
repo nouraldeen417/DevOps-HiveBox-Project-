@@ -2,8 +2,8 @@ name: Continuous Integration
 
 on:
   push:
-    tags:
-      - 'v*.*.*' # This pipeline ONLY runs when you push a tag like v1.0.2
+    branches: ["**"]
+
   workflow_dispatch:        # allows manual trigger from GitHub UI
 
 # Cancel previous runs on the same PR — saves runner minutes
