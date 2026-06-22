@@ -14,7 +14,7 @@ spec:
     # targetRevision: HEAD 
     
     #for testing purposes, we are using a branch called phase-6. In production, you would typically use a tag or main branch.
-    targetRevision: phase-6     
+    targetRevision: phase-7     
     # The exact path to your umbrella chart we worked on earlier
     
     path: k8s/app/helm/hivebox

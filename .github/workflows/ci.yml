@@ -2,10 +2,9 @@ name: Continuous Integration
 
 on:
   push:
-    branches: ["**"]
-
+    tags:
+      - 'v*.*.*' # This pipeline ONLY runs when you push a tag like v1.0.2
   workflow_dispatch:        # allows manual trigger from GitHub UI
-
 
 # Cancel previous runs on the same PR — saves runner minutes
 # Why: if you push multiple commits quickly, only the latest run matters
@@ -314,7 +313,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
               with:
-                ref: main          # always update main, not the tag ref
+                ref: phase-7          # always update main, not the tag ref
                 token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Install yq
@@ -336,4 +335,4 @@ jobs:
                 git diff --staged --quiet && echo "No changes to commit" && exit 0
                 # git commit -m "chore: bump image tag to ${{ env.IMAGE_TAG }}"
                 git commit -m "chore: bump to ${{ steps.version.outputs.VERSION }} [skip ci]"
-                git push origin 
+                git push origin phase-7
