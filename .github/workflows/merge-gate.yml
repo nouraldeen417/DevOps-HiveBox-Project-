@@ -1,0 +1,247 @@
+name: PR Gate - Full Validation
+
+on:
+  pull_request:
+    branches: [main]       # full validation only runs before merging to main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  IMAGE_NAME: ghcr.io/nouraldeen417/devops-hivebox
+  IMAGE_TAG: pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+  # Why this tag format: PR builds are not releases, so we tag with PR number + sha,
+  # never a version tag. Version tags are reserved for actual releases (see cd.yml).
+
+jobs:
+    lint:
+        name: Lint Code & Dockerfile
+        runs-on: ubuntu-latest
+        steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              with:
+                egress-policy: audit
+
+            - name: checkout code
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+            - name: Set up Python
+              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+              with:
+                python-version: '3.12'
+                cache: pip
+
+            - name: Install dependencies
+              run: pip install -r requirements.txt pylint
+
+            - name: Run Pylint
+              run: pylint src/ --fail-under=8.0
+
+            - name: Run Hadolint
+              uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf
+              with:
+                dockerfile: Dockerfile
+
+    test:
+        name: Run test files
+        runs-on: ubuntu-latest
+        needs: lint
+        steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              with:
+                egress-policy: audit
+
+            - name: checkout code
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+            - name: Setup Python
+              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+              with:
+                python-version: '3.12'
+                cache: pip
+
+            - name: Install dependencies
+              run: pip install -r requirements.txt
+
+            - name: Run Pytest
+              run: pytest tests/test_app.py -v
+
+    build_and_e2e:
+        name: Build Image, Deploy to KIND, and E2E Test
+        runs-on: ubuntu-latest
+        needs: test
+        steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              with:
+                egress-policy: audit
+
+            - name: checkout code
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+            - name: Set up Docker Buildx
+              # Enables Docker layer caching — reuses unchanged layers
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
+
+            - name: Build Docker image
+              uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1
+              with:
+                context: .
+                push: false
+                # Why push false: PR validation only builds and tests — cd.yml handles pushing real releases
+                load: true
+                # Why load: makes image available to docker run in next steps
+                tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
+
+            # Scan the Image using Trivy
+            - name: Scan image with Trivy
+              uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
+              with:
+                image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+                format: table
+                exit-code: 1
+                severity: CRITICAL
+                ignore-unfixed: true
+
+            - name: Create k8s Kind Cluster
+              # Uses your physical config file for Port 80 mappings
+              uses: helm/kind-action@v1.10.0
+              with:
+                cluster_name: hivebox-e2e-cluster
+                config: k8s/kind-config.yaml
+
+            - name: Fix pod DNS
+              run: |
+                kubectl -n kube-system get configmap coredns -o yaml | \
+                  sed 's|forward . /etc/resolv.conf|forward . 8.8.8.8 8.8.4.4|' | \
+                  kubectl apply -f -
+                kubectl -n kube-system delete pod -l k8s-app=kube-dns
+
+            - name: Load image into KIND cluster
+              run: kind load docker-image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} --name hivebox-e2e-cluster
+
+            - name: Deploy NGINX Ingress Controller
+              # Simulates your cloud load balancer environment locally
+              run: |
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+                echo "Waiting for Ingress Controller to be ready..."
+                kubectl wait --namespace ingress-nginx \
+                  --for=condition=ready pod \
+                  --selector=app.kubernetes.io/component=controller \
+                  --timeout=120s
+
+            - name: Create Namespace
+              run: |
+                kubectl create namespace hivebox
+
+            - name: Create minio Credentials
+              run: |
+                kubectl create secret generic minio-credentials -n hivebox \
+                  --from-literal=username=${{ secrets.MINIO_USER }} \
+                  --from-literal=password=${{ secrets.MINIO_PASS }}
+
+            - name: Deploy Infrastructure via Kustomize (Valkey & MinIO)
+              run: |
+                kubectl apply -k k8s/infrastructure/overlays/local/
+                kubectl wait --for=condition=Ready pods --all -n hivebox --timeout=120s
+
+            - name: Deploy Application via Helm
+              run: |
+                helm install hivebox ./k8s/app/helm/hivebox -n hivebox \
+                  --set image.repository=${{ env.IMAGE_NAME }} \
+                  --set image.tag=${{ env.IMAGE_TAG }} \
+                  --set image.pullPolicy=Never \
+                  --set metrics.enabled=false
+
+                kubectl wait --for=condition=Ready pods --all -n hivebox --timeout=200s
+
+            - name: Debug Pod Failure
+              if: failure()
+              run: |
+                echo "=== POD STATUS ==="
+                kubectl get pods -n hivebox
+
+                echo "=== POD EVENTS & DETAILS ==="
+                kubectl describe pods -n hivebox
+
+                echo "=== APPLICATION LOGS ==="
+                kubectl logs -l app.kubernetes.io/name=hivebox -n hivebox --all-containers=true
+
+            - name: Install Venom
+              # Declarative test runner for your E2E HTTP validation
+              run: |
+                curl -sL https://github.com/ovh/venom/releases/download/v1.2.0/venom.linux-amd64 -o /usr/local/bin/venom
+                chmod +x /usr/local/bin/venom
+
+            - name: Run Venom E2E Tests
+              # Executes against http://localhost (Ingress)
+              run: |
+                venom run e2e-tests/*.yml
+
+    # sonarqube:
+    #     name: SonarQube quality gate
+    #     runs-on: ubuntu-latest
+    #     needs: test
+    #     # Why after test: code must pass unit tests before quality analysis
+    #     # Why parallel with build: SonarQube does not need Docker
+    #     steps:
+    #       - name: Harden runner
+    #         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+    #         with:
+    #           egress-policy: audit
+
+    #       - name: Checkout code
+    #         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    #         with:
+    #           fetch-depth: 0
+    #           # Why fetch-depth 0: SonarQube needs full git history
+
+    #       - name: SonarQube scan
+    #         uses: sonarsource/sonarqube-scan-action@master
+    #         env:
+    #           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    #           SONAR_HOST_URL: https://sonarcloud.io
+
+    #       - name: SonarQube quality gate check
+    #         uses: sonarsource/sonarqube-quality-gate-action@master
+    #         timeout-minutes: 5
+    #         env:
+    #           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    terrascan:
+        name: Scan Kubernetes & Helm Manifests
+        runs-on: ubuntu-latest
+        # needs: [build_and_e2e, sonarqube]
+        needs: build_and_e2e
+        steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              with:
+                egress-policy: audit
+
+            - name: Checkout code
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+            - name: Run Terrascan on Kustomize
+              # Scans the static k8s infrastructure folder
+              uses: tenable/terrascan-action@main
+              with:
+                iac_type: k8s
+                iac_dir: k8s/infrastructure/
+                only_warn: true
+                # Why only_warn: reports issues without failing the build
+
+            - name: Run Terrascan on Helm Chart
+              # Scans the Helm chart templates dynamically
+              uses: tenable/terrascan-action@main
+              with:
+                iac_type: helm
+                iac_dir: k8s/app/helm/hivebox/
+                only_warn: true

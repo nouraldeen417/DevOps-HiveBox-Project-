@@ -27,6 +27,7 @@
     state: present
     values:
       loki:
+        isDefault: false # <-- This prevents the data source conflict
         # Uses fast, ephemeral storage safe for local testing loops
         persistence:
           enabled: false

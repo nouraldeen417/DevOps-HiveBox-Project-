@@ -63,7 +63,7 @@ kubectl run debug \
 
 
 ### **Phase 5: Accessing the Dashboards**
-
+kubectl apply -k dashboards/ 
 # Open your terminal multiplexer (or multiple tabs) to run these background port-forwards and access your UIs.
 
 # **ArgoCD UI:**
@@ -78,7 +78,7 @@ kubectl port-forward svc/argocd-server 8080:80 -n argocd
 # **Grafana UI:**
 
 # Port-forward the Grafana UI (Open http://localhost:3000)
-kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
+kubectl port-forward svc/monitoring-stack-grafana  3000:80 -n monitoring
 # Username: admin
 # Password: admin (as configured in your Ansible playbook)
 

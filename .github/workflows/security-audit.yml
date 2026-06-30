@@ -1,0 +1,73 @@
+# OpenSSF (OpenSource Software) Scorecard , Is An automated security scanner that checks your repo against security best practices.
+# Run automatically on code you own using the GitHub Action
+# It gives your project a score (0–10) and reports weaknesses.
+# To see the results (Repository → Security → Code Scanning Alerts)
+
+name:  OpenSSF Scorecard
+on: 
+  workflow_dispatch:        # allows manual trigger from GitHub UI
+  push:
+    branches: [main]
+
+# Based on the Tool Docs ,These permissions are needed 
+permissions:
+  contents: read
+# Scorecard needs to read your repo.
+
+
+# JOBS
+#Run Scorecard
+#   ↓
+# Generate security report
+#   ↓
+# Upload report to GitHub
+
+
+jobs:
+  analysis:
+    name: Scorecard Analysis
+    runs-on: ubuntu-latest
+    
+    # Based on the Tool Docs ,These permissions are needed 
+    permissions:
+      security-events: write
+      # Why: needed to upload results to GitHub Security tab
+      id-token: write
+      # Why: needed for Scorecard to publish results publicly
+      contents: read 
+      # read repo contents during analysis
+
+    steps:
+
+      - name: Harden runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # v2.12.0
+        with:
+          egress-policy: audit
+            
+      # Checking out the code
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          # Scorecard best practice.
+          # Prevents the GitHub token from being available
+          persist-credentials: false
+
+      # Running Scorecard tool
+      - name: Run Scorecard
+        uses: ossf/scorecard-action@v2.3.1
+        with:
+          results_file: results.sarif
+
+          # SARIF is a standard security-report format.
+          results_format: sarif
+
+          # Shows your score publicly on scorecard.dev
+          publish_results: true
+
+      - name: Upload to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@181d5eefc20863364f96762470ba6f862bdef56b
+        with:
+          sarif_file: results.sarif
+          # Why: Makes results visible inside your repo
+          # under GitHub → Security → Code scanning
+          # You can see and fix issues directly on GitHub.
