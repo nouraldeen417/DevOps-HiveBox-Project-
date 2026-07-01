@@ -23,7 +23,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
@@ -54,7 +54,7 @@ jobs:
         needs: lint
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
@@ -80,7 +80,7 @@ jobs:
         needs: test
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
@@ -197,7 +197,7 @@ jobs:
     #     # Why parallel with build: SonarQube does not need Docker
     #     steps:
     #       - name: Harden runner
-    #         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+    #         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
     #         with:
     #           egress-policy: audit
 
@@ -227,7 +227,7 @@ jobs:
         needs: build_and_e2e
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 

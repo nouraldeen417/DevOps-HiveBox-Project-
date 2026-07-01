@@ -22,7 +22,7 @@ jobs:
         steps:
             # Audit outbound network traffic from the GitHub Actions runner for security visibility.
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
@@ -61,7 +61,7 @@ jobs:
         needs: lint
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
@@ -88,7 +88,7 @@ jobs:
         # Why after test: no point spinning up the full stack if unit tests already fail
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
