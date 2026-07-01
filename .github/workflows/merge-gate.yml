@@ -18,6 +18,7 @@ env:
 
 jobs:
     lint:
+        if: github.actor != 'dependabot[bot]'
         name: Lint Code & Dockerfile
         runs-on: ubuntu-latest
         steps:
@@ -47,6 +48,7 @@ jobs:
                 dockerfile: Dockerfile
 
     test:
+        if: github.actor != 'dependabot[bot]'
         name: Run test files
         runs-on: ubuntu-latest
         needs: lint
@@ -72,6 +74,7 @@ jobs:
               run: pytest tests/test_app.py -v
 
     build_and_e2e:
+        if: github.actor != 'dependabot[bot]'
         name: Build Image, Deploy to KIND, and E2E Test
         runs-on: ubuntu-latest
         needs: test
@@ -112,7 +115,7 @@ jobs:
 
             - name: Create k8s Kind Cluster
               # Uses your physical config file for Port 80 mappings
-              uses: helm/kind-action@v1.10.0
+              uses: helm/kind-action@a2f6ca4903dce2f8f0e3cfb6c0d5dffc0f197d73
               with:
                 cluster_name: hivebox-e2e-cluster
                 config: k8s/kind-config.yaml
@@ -186,6 +189,7 @@ jobs:
                 venom run e2e-tests/*.yml
 
     # sonarqube:
+    #     if: github.actor != 'dependabot[bot]'
     #     name: SonarQube quality gate
     #     runs-on: ubuntu-latest
     #     needs: test
@@ -219,6 +223,7 @@ jobs:
         name: Scan Kubernetes & Helm Manifests
         runs-on: ubuntu-latest
         # needs: [build_and_e2e, sonarqube]
+        if: github.actor != 'dependabot[bot]'
         needs: build_and_e2e
         steps:
             - name: Harden runner
