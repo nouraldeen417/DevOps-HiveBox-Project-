@@ -22,17 +22,17 @@ jobs:
         steps:
             # Audit outbound network traffic from the GitHub Actions runner for security visibility.
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
             # Step is getting the code into the runner
             - name: checkout code
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
             # Install Python on the runner
             - name: Set up Python
-              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+              uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
               with:
                 python-version: '3.12'
                 # Why cache: skips re-downloading packages on every run
@@ -51,7 +51,7 @@ jobs:
 
             # Using Hadolint Action to scan the Dockerfile
             - name: Run Hadolint
-              uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf
+              uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5
               with:
                 dockerfile: Dockerfile
 
@@ -61,15 +61,15 @@ jobs:
         needs: lint
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
             - name: checkout code
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
             - name: Setup Python
-              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+              uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
               with:
                 python-version: '3.12'
                 cache: pip
@@ -88,19 +88,19 @@ jobs:
         # Why after test: no point spinning up the full stack if unit tests already fail
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
               with:
                 egress-policy: audit
 
             - name: Checkout code
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
             - name: Set up Docker Buildx
               # Enables layer caching — reuses unchanged layers
-              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
+              uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
 
             - name: Build image
-              uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1
+              uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
               with:
                 context: .
                 push: false
