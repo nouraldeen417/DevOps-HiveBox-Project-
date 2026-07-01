@@ -1,0 +1,71 @@
+name: hivebox-test
+
+services:
+  app:
+    image: ghcr.io/nouraldeen417/devops-hivebox:test
+    environment:
+      # Valkey connection
+      VALKEY_HOST: valkey
+      VALKEY_PORT: "6379"
+      # MinIO connection
+      MINIO_ENDPOINT: minio:9000
+      MINIO_BUCKET: hivebox
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_USE_SSL: "false"
+      # senseBox IDs — same 3 used in production
+      SENSEBOX_IDS: "5eba5fbad46fb8001b799786,5c21ff8f919bf8001adf2488,5ade1acf223bd80019a1011c"
+      # App version — test build, not a real release tag
+      APP_VERSION: test
+    ports:
+      - "5000:5000"
+    depends_on:
+      valkey:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  minio-init:
+    # Why: MinIO starts empty — this creates the hivebox bucket before the app starts
+    # so /store endpoint works correctly on first call
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/hivebox &&
+        echo 'Bucket hivebox created successfully'
+      "
+    restart: on-failure

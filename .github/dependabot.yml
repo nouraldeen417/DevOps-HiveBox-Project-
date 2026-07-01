@@ -1,25 +1,32 @@
-# What it does: Automatically opens PRs when your dependencies have outdated versions or known CVEs. Without it you'd never know a package you use got a security fix.
-
+# .github/dependabot.yml
 version: 2
 
 updates:
-  # Python packages (requirements.txt)
   - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      all-pip-updates:
+        patterns: ["*"]                          # one PR for all pip updates
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns: ["pytest"]             # keep pytest separate if you want manual control
 
-  # GitHub Actions (all your workflow files)
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      all-actions-updates:
+        patterns: ["*"]                          # one PR for all actions updates
 
-  # Docker base image (your Dockerfile)
   - package-ecosystem: docker
     directory: "/"
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    # docker not grouped — each base image bump reviewed separately
