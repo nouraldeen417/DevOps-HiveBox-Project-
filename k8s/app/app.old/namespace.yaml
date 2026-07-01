@@ -1,0 +1,10 @@
+# namespace.yaml
+# Isolates HiveBox resources from other workloads in the cluster.
+# All other manifests will be deployed into this namespace.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hivebox
+  labels:
+    app: hivebox

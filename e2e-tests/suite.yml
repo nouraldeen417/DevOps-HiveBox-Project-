@@ -1,0 +1,48 @@
+name: Hivebox End-to-End Test Suite
+vars:
+  host: "http://localhost"
+
+testcases:
+  - name: Verify Version Endpoint
+    steps:
+      - type: http
+        method: GET
+        url: "{{.host}}/version"
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring version
+
+  - name: Fetch Temperature to warm cache
+    steps:
+      - type: http
+        method: GET
+        url: "{{.host}}/temperature"
+        retry: 5
+        delay: 10
+        assertions:
+          - result.statuscode ShouldEqual 200
+
+  - name: Test Manual MinIO Export
+    steps:
+      - type: http
+        method: GET
+        url: "{{.host}}/store"
+        assertions:
+          - result.statuscode ShouldEqual 200
+
+  - name: Verify Readiness Probe Logic
+    steps:
+      - type: http
+        method: GET
+        url: "{{.host}}/readyz"
+        assertions:
+          - result.statuscode ShouldEqual 200
+
+  - name: Validate Custom Prometheus Metrics
+    steps:
+      - type: http
+        method: GET
+        url: "{{.host}}/metrics"
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring flask_http

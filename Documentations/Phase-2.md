@@ -2,6 +2,18 @@
 
 A scalable RESTful API for beekeepers, built around [openSenseMap](https://opensensemap.org/). Fetches real sensor data (temperature, humidity, pressure) from physical senseBox devices and returns clean JSON.
 
+
+<p align="center">
+  <a href="https://devopsroadmap.io/projects/hivebox/" imageanchor="1">
+    <img width="90%" src="https://devopsroadmap.io/assets/images/module-02-overview-22e040ce248a0b72495dbc2cea9f6986.png" />
+  </a><br/>
+</p>
+<p align="center">
+  <a href="https://devopsroadmap.io/projects/hivebox/" imageanchor="1">
+    <img width="90%" src="https://devopsroadmap.io/assets/images/hivebox-architecture-phase-02-7a31715c4e08bae9a4b9c43d6a8d6127.png" />
+  </a><br/>
+</p>
+
 ---
 
 ## Project Structure
@@ -17,6 +29,8 @@ hivebox/
 ├── conftest.py         ← pytest path config
 ├── Dockerfile
 ├── requirements.txt
+└── LICENSE.md
+└── Documentations/
 └── README.md
 ```
 
@@ -104,15 +118,3 @@ curl http://localhost:5000/version
 
 ---
 
-## Phases
-
-| Phase  | Focus                          |
-|--------|--------------------------------|
-| **1**  | Foundation — Flask app, Docker |
-| **2**  | openSenseMap integration, CI/CD|
-| **3**  | Caching, health, metrics       |
-| **4+** | Kubernetes, Terraform, monitoring |
-
----
-
-Happy DevOpsing ♾️

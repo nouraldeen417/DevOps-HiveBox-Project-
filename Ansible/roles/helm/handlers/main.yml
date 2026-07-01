@@ -1,0 +1,12 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for roles/helm
+- name: Verify Helm installation
+  ansible.builtin.command: helm version --short
+  register: helm_version_check
+  changed_when: false
+  failed_when: helm_version_check.rc != 0
+
+- name: Display Helm version
+  ansible.builtin.debug:
+    msg: "Helm installed successfully: {{ helm_version_check.stdout }}"   

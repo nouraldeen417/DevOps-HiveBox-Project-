@@ -1,0 +1,25 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/cluster-verification
+# ==========================================
+# 1. Cluster Health Check
+# ==========================================
+- name: Get Cluster information
+  kubernetes.core.k8s_info:
+    kind: nodes
+  register: api_status
+
+- name: Check if cluster is reachable
+  ansible.builtin.assert:
+    that:
+      - api_status.resources is defined
+    fail_msg: "Cluster is not reachable. Please check your kubeconfig and cluster status."
+    success_msg: "Cluster is reachable."
+
+- name: Check if cluster has nodes
+  ansible.builtin.assert:
+    that:
+      - api_status.resources | selectattr('kind', 'equalto', 'Node') | list | length > 0
+    fail_msg: "No nodes found in the cluster. Please check your cluster status."
+    success_msg: "Cluster has nodes."
+

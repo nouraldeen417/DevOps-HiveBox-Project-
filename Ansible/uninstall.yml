@@ -1,0 +1,67 @@
+---
+# ============================================================
+# K8s Cluster Setup — Uninstall Playbook
+# Usage:
+#   ansible-playbook -i inventory/hosts.ini uninstall.yml
+#
+# Uninstall only specific components:
+#   ansible-playbook -i inventory/hosts.ini uninstall.yml \
+#     -e "install_argo=true install_monitoring=false install_loki=false install_nginx_ingress=false"
+#
+# NOTE: Components are removed in reverse order (Argo → Loki → Monitoring → Nginx → Helm)
+# ============================================================
+
+- name: Uninstall cluster components
+  hosts: k8s_master
+  gather_facts: true
+  become: false
+
+  pre_tasks:
+    - name: Show uninstall plan
+      ansible.builtin.debug:
+        msg: |
+          ======================================
+          K8s Cluster Setup — Uninstall Plan
+          ======================================
+          Argo CD         : {{ 'WILL REMOVE' if install_argo else 'skip' }}
+          Loki            : {{ 'WILL REMOVE' if install_loki else 'skip' }}
+          Monitoring      : {{ 'WILL REMOVE' if install_monitoring else 'skip' }}
+          Nginx Ingress   : {{ 'WILL REMOVE' if install_nginx_ingress else 'skip' }}
+          Helm binary     : {{ 'WILL REMOVE' if install_helm else 'skip' }}
+          ======================================
+
+    - name: Confirm uninstall
+      ansible.builtin.pause:
+        prompt: "Press ENTER to continue uninstall, or Ctrl+C to cancel"
+
+  roles:
+    # Reverse order — Argo first, Helm last
+    - role: argo
+      vars:
+        helm_action: uninstall
+      when: install_argo
+
+    - role: loki
+      vars:
+        helm_action: uninstall
+      when: install_loki
+
+    - role: monitoring
+      vars:
+        helm_action: uninstall
+      when: install_monitoring
+
+    - role: nginx-ingress
+      vars:
+        helm_action: uninstall
+      when: install_nginx_ingress
+
+    - role: helm
+      vars:
+        helm_action: uninstall
+      when: install_helm
+
+  post_tasks:
+    - name: Uninstall complete
+      ansible.builtin.debug:
+        msg: "✅ All selected components have been removed."

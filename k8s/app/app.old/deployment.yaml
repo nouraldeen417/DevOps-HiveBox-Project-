@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hivebox
+  namespace: hivebox
+  labels:
+    app: hivebox
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hivebox
+  template:
+    metadata:
+      labels:
+        app: hivebox
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/hivebox: runtime/default
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: hivebox
+          image: hivebox:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+
+          # Security moved to container level (fixes terrascan false positives)
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true      # add this
+            runAsUser: 1000         # add this
+
+          envFrom:
+            - configMapRef:
+                name: hivebox-config
+            - secretRef:
+                name: hivebox-secret
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /version
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10

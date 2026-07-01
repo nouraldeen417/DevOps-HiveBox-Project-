@@ -1,0 +1,24 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/helm
+- name: Install Helm 3
+  block:
+    - name: Download Helm installer
+      ansible.builtin.get_url:
+        url: "{{ url }}"
+        dest: /tmp/get_helm.sh
+        mode: '0700'
+    - name: Run installer
+      ansible.builtin.command: /tmp/get_helm.sh
+      args:
+        creates: /usr/local/bin/helm   
+  notify: 
+    - Verify Helm installation
+    - Display Helm version 
+  when: helm_action == "install"
+
+- name: Remove Helm binary
+  ansible.builtin.file:
+    path: /usr/local/bin/helm
+    state: absent   
+  when: helm_action == "uninstall"

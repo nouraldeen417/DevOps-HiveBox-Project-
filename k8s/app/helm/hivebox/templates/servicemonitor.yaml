@@ -1,0 +1,20 @@
+# charts/hivebox/templates/servicemonitor.yaml
+{{- if .Values.metrics.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+
+  name: {{ .Release.Name }}-hivebox
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: hivebox
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: hivebox
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+{{- end }}

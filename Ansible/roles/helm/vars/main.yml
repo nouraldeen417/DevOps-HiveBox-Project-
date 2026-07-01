@@ -1,0 +1,4 @@
+#SPDX-License-Identifier: MIT-0
+---
+# vars file for roles/helm
+url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
