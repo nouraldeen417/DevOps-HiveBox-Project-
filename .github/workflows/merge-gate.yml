@@ -119,7 +119,10 @@ jobs:
               with:
                 cluster_name: hivebox-e2e-cluster
                 config: k8s/kind-config.yaml
-
+            - name: Prep MinIO host mount permissions
+              run: |
+                mkdir -p /tmp/hivebox-minio-data
+                chmod 777 /tmp/hivebox-minio-data
             - name: Fix pod DNS
               run: |
                 kubectl -n kube-system get configmap coredns -o yaml | \

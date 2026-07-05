@@ -63,61 +63,39 @@ never touch Git — was made deliberately, not by default.
 ## Architecture
 
 ```mermaid
-flowchart TB
-    subgraph External
-        OSM[openSenseMap API]
-    end
-
+flowchart LR
+    DEV([Developer<br/>push / PR]) --> CICD
+ 
     subgraph CICD["CI/CD — GitHub Actions"]
-        direction LR
-        BC[branch-checks.yml<br/>lint · test · compose e2e]
-        MG[merge-gate.yml<br/>KIND e2e · Trivy · Terrascan]
-        CQ[codeql.yml]
-        DR[dependency-review.yml]
-        REL[release.yml<br/>build · push · bump values.yaml]
-        SA[security-audit.yml<br/>OpenSSF Scorecard]
-    end
-
-    GHCR[(GHCR<br/>Image Registry)]
-    GIT[(Git — main)]
-
-    subgraph Cluster["Kubernetes Cluster (KIND)"]
         direction TB
-
-        subgraph AnsibleLayer["Cluster Tooling — via Ansible"]
-            NGINX[Nginx Ingress]
-            PROM[Prometheus]
-            GRAF[Grafana]
-            LOKI[Loki]
-            ARGO[ArgoCD]
-        end
-
-        subgraph AppLayer["App — via Helm (scoped only to the app)"]
-            API[HiveBox Flask App]
-        end
-
-        subgraph InfraLayer["Infra — via Kustomize"]
-            VALKEY[(Valkey Cache)]
-            MINIO[(MinIO Storage)]
-        end
+        C1[Lint · Test · Compose smoke test]
+        C2[KIND e2e · Trivy · Terrascan]
+        C3[CodeQL · Dependency Review]
+        C4[Release: build & push image]
+        C1 --> C2 --> C4
     end
-
-    OSM --> API
-    API --> VALKEY
-    API --> MINIO
-    PROM --> API
-    GRAF --> PROM
-    GRAF --> LOKI
-    NGINX --> API
-
-    BC --> MG
-    MG --> REL
-    REL --> GHCR
-    REL --> GIT
-    GIT --> ARGO
+ 
+    CICD --> GHCR[(GHCR<br/>Image Registry)]
+    CICD --> GIT[(Git<br/>main branch)]
+ 
+    GIT --> ARGO{{ArgoCD<br/>GitOps Sync}}
     GHCR --> ARGO
-    ARGO -->|sync| AppLayer
+ 
+    ARGO --> K8S
+ 
+    subgraph K8S["Kubernetes Cluster (KIND)"]
+        direction TB
+        APP[App — Flask API<br/>deployed via Helm]
+        INFRA[(Infra — Valkey + MinIO<br/>via Kustomize)]
+        PLATFORM[Platform Tooling<br/>Ingress · Prometheus · Grafana · Loki<br/>via Ansible]
+ 
+        PLATFORM --> APP
+        APP --> INFRA
+    end
+ 
+    OSM([openSenseMap API]) --> APP
 ```
+ 
 
 **The deliberate split:** Helm deploys *only* the app — not monitoring, not
 ingress. Cluster tooling (Prometheus/Grafana/Loki/Nginx/ArgoCD) is

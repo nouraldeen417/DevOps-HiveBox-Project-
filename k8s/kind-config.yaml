@@ -25,5 +25,5 @@ nodes:
         hostPort: 443
         protocol: TCP
     extraMounts:
-      - hostPath: /home/nour/hivebox-minio-data   # a real path on your machine
+      - hostPath: /tmp/hivebox-minio-data   # a real path on your machine
         containerPath: /data/minio    
