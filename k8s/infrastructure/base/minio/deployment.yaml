@@ -54,4 +54,6 @@ spec:
               cpu: "300m"
       volumes:
         - name: minio-data
-          emptyDir: {}
+          hostPath:
+            path: /data/minio
+            type: DirectoryOrCreate

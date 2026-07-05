@@ -151,7 +151,7 @@ jobs:
 
             - name: Show logs on failure
               if: failure()
-              run: docker compose -f docker-compose.test.yml logs
+              run: docker compose -f docker-compose.yml logs
 
             - name: Tear down
               if: always()

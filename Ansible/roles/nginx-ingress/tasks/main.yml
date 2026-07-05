@@ -35,12 +35,10 @@
 # ==========================================
 # UNINSTALL / CLEANUP BLOCK
 # ==========================================
-- name: Uninstall NGINX Ingress Controller via Helm
-  kubernetes.core.helm:
-    name: "{{ ingress_nginx_release_name }}"
-    release_namespace: "{{ ingress_nginx_namespace }}"
+- name: Remove NGINX Ingress Controller resources (raw manifest)
+  kubernetes.core.k8s:
     state: absent
-    wait: true
+    src: "{{ ingress_nginx_repo_url }}"
   when: helm_action == 'uninstall'
 
 - name: Remove Ingress Namespace
