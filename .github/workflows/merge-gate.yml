@@ -112,17 +112,17 @@ jobs:
                 exit-code: 1
                 severity: CRITICAL
                 ignore-unfixed: true
-
+            - name: Prep MinIO host mount permissions
+              run: |
+                sudo mkdir -p /tmp/hivebox-minio-data
+                sudo chmod 777 /tmp/hivebox-minio-data
             - name: Create k8s Kind Cluster
               # Uses your physical config file for Port 80 mappings
               uses: helm/kind-action@v1.10.0
               with:
                 cluster_name: hivebox-e2e-cluster
                 config: k8s/kind-config.yaml
-            - name: Prep MinIO host mount permissions
-              run: |
-                mkdir -p /tmp/hivebox-minio-data
-                chmod 777 /tmp/hivebox-minio-data
+
             - name: Fix pod DNS
               run: |
                 kubectl -n kube-system get configmap coredns -o yaml | \
