@@ -22,7 +22,7 @@ jobs:
         steps:
             # Audit outbound network traffic from the GitHub Actions runner for security visibility.
             - name: Harden runner
-              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
+              uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920
               with:
                 egress-policy: audit
 
@@ -61,7 +61,7 @@ jobs:
         needs: lint
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
+              uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920
               with:
                 egress-policy: audit
 
@@ -88,7 +88,7 @@ jobs:
         # Why after test: no point spinning up the full stack if unit tests already fail
         steps:
             - name: Harden runner
-              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411
+              uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920
               with:
                 egress-policy: audit
 
@@ -97,10 +97,10 @@ jobs:
 
             - name: Set up Docker Buildx
               # Enables layer caching — reuses unchanged layers
-              uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
 
             - name: Build image
-              uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
+              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a
               with:
                 context: .
                 push: false
